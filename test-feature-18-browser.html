@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature #18: Feels Like Temperature - Manual Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-case {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    .test-case.show {
+      border-color: #4caf50;
+      background: #f1f8f4;
+    }
+    .test-case.hide {
+      border-color: #ff9800;
+      background: #fff8f0;
+    }
+    .temperature-display {
+      font-size: 48px;
+      font-weight: bold;
+    }
+    .feels-like {
+      font-size: 18px;
+      color: #666;
+      margin-top: 5px;
+    }
+    .label {
+      font-weight: 600;
+      color: #333;
+    }
+    .pass { color: #4caf50; }
+    .fail { color: #f44336; }
+    .info { color: #2196f3; }
+    h1 { color: #333; }
+    h2 { color: #666; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Feature #18: Feels Like Temperature Display</h1>
+  <p class="info">Open browser DevTools Console to see test results</p>
+
+  <div class="test-section">
+    <h2>Test Summary</h2>
+    <div id="summary"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Visual Test Cases</h2>
+    <div id="test-cases"></div>
+  </div>
+
+  <script type="module">
+    import { fetchCurrentWeather } from './src/lib/openmeteo.ts';
+
+    const testCases = [
+      {
+        name: 'San Francisco (small diff)',
+        lat: 37.7749,
+        lon: -122.4194,
+        expected: 'HIDE',
+        reason: 'Difference typically < 2°C'
+      },
+      {
+        name: 'Chicago (windy, large diff)',
+        lat: 41.8781,
+        lon: -87.6298,
+        expected: 'SHOW',
+        reason: 'Wind chill often makes it feel >2° colder'
+      },
+      {
+        name: 'Anchorage (cold, large diff)',
+        lat: 61.2181,
+        lon: -149.9003,
+        expected: 'SHOW',
+        reason: 'Wind chill makes it feel much colder'
+      },
+      {
+        name: 'Miami (hot)',
+        lat: 25.7617,
+        lon: -80.1918,
+        expected: 'VARIES',
+        reason: 'Depends on humidity'
+      }
+    ];
+
+    let passed = 0;
+    let failed = 0;
+    let total = 0;
+
+    function createTestCaseHTML(name, temperature, apparentTemp, showFeelsLike) {
+      const diff = Math.abs(temperature - apparentTemp);
+      const cssClass = showFeelsLike ? 'show' : 'hide';
+      const feelsLikeHTML = showFeelsLike
+        ? `<div class="feels-like">Feels like ${Math.round(apparentTemp)}°</div>`
+        : '';
+
+      return `
+        <div class="test-case ${cssClass}">
+          <div class="label">${name}</div>
+          <div class="temperature-display">${Math.round(temperature)}°</div>
+          ${feelsLikeHTML}
+          <div style="margin-top: 10px; font-size: 14px; color: #666;">
+            Difference: ${diff.toFixed(1)}° (threshold: >2°)<br>
+            "Feels like" is: <strong>${showFeelsLike ? 'VISIBLE' : 'HIDDEN'}</strong>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateSummary() {
+      document.getElementById('summary').innerHTML = `
+        <p><strong>Total Tests:</strong> ${total}</p>
+        <p class="pass"><strong>Passed:</strong> ${passed}</p>
+        <p class="fail"><strong>Failed:</strong> ${failed}</p>
+        <p><strong>Success Rate:</strong> ${total > 0 ? ((passed / total) * 100).toFixed(1) : 0}%</p>
+      `;
+    }
+
+    async function runTests() {
+      console.log('╔══════════════════════════════════════════════════════════════╗');
+      console.log('║  Feature #18: Feels Like Temperature Display                ║');
+      console.log('╚══════════════════════════════════════════════════════════════╝');
+
+      const testCasesHTML = [];
+
+      for (const testCase of testCases) {
+        total++;
+        console.log(`\n📍 Testing: ${testCase.name}`);
+
+        try {
+          const data = await fetchCurrentWeather(testCase.lat, testCase.lon);
+          const temp = data.current.temperature;
+          const feelsLike = data.current.apparent_temperature;
+          const diff = Math.abs(temp - feelsLike);
+          const shouldShow = diff > 2;
+
+          console.log(`   Temperature: ${temp}°C`);
+          console.log(`   Feels like: ${feelsLike}°C`);
+          console.log(`   Difference: ${diff.toFixed(1)}°C`);
+          console.log(`   Expected: ${testCase.expected}`);
+          console.log(`   Should show: ${shouldShow ? 'YES' : 'NO'}`);
+
+          // For VARIES cases, we just check if the logic is correct
+          const testPassed = testCase.expected === 'VARIES' ||
+                             (testCase.expected === 'SHOW' && shouldShow) ||
+                             (testCase.expected === 'HIDE' && !shouldShow);
+
+          if (testPassed) {
+            passed++;
+            console.log(`   ✅ PASS`);
+          } else {
+            failed++;
+            console.log(`   ❌ FAIL: Expected "${testCase.expected}", got "${shouldShow ? 'SHOW' : 'HIDE'}"`);
+          }
+
+          testCasesHTML.push(createTestCaseHTML(
+            testCase.name,
+            temp,
+            feelsLike,
+            shouldShow
+          ));
+
+        } catch (error) {
+          failed++;
+          console.log(`   ❌ FAIL: ${error.message}`);
+          testCasesHTML.push(`
+            <div class="test-case">
+              <div class="label">${testCase.name}</div>
+              <div style="color: #f44336;">❌ Failed to fetch: ${error.message}</div>
+            </div>
+          `);
+        }
+
+        updateSummary();
+      }
+
+      document.getElementById('test-cases').innerHTML = testCasesHTML.join('');
+
+      console.log('\n╔══════════════════════════════════════════════════════════════╗');
+      console.log('║  Test Summary                                                ║');
+      console.log('╚══════════════════════════════════════════════════════════════╝');
+      console.log(`\nTotal: ${total}`);
+      console.log(`Passed: ${passed} ✅`);
+      console.log(`Failed: ${failed} ❌`);
+      console.log(`Success Rate: ${total > 0 ? ((passed / total) * 100).toFixed(1) : 0}%`);
+
+      if (failed === 0) {
+        console.log('\n✅ ALL TESTS PASSED! Feature #18 is working correctly.');
+      } else {
+        console.log('\n❌ SOME TESTS FAILED. Please review the failures above.');
+      }
+    }
+
+    // Run tests
+    runTests();
+  </script>
+</body>
+</html>

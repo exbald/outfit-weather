@@ -481,45 +481,68 @@ export function parseDailyForecast(dailyData: CurrentWeatherResponse['daily']): 
 }
 
 /**
- * Response from Open-Meteo Reverse Geocoding API
+ * Response from BigDataCloud Reverse Geocoding API
+ * Documentation: https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api
  */
-export interface ReverseGeocodingResponse {
-  results?: Array<{
-    id: number
-    name: string
-    latitude: number
-    longitude: number
-    country?: string
-    country_code?: string
-    region?: string
-    region_code?: string
-    postcode?: string
-    city?: string
-    population?: number
-    admin1?: string
-    admin2?: string
-    admin3?: string
-    admin4?: string
-  }>
-  error?: boolean
-  reason?: string
+export interface BigDataCloudReverseGeocodeResponse {
+  latitude: number
+  longitude: number
+  lookupSource: string
+  localityLanguageRequested: string
+  continent: string
+  continentCode: string
+  countryName: string
+  countryCode: string
+  principalSubdivision: string
+  principalSubdivisionCode: string
+  city: string
+  locality: string
+  postcode: string
+  plusCode: string
+  fips: {
+    state: string
+    county: string
+    countySubdivision: string
+    place: string
+  }
+  localityInfo: {
+    administrative: Array<{
+      name: string
+      description: string
+      isoName: string
+      order: number
+      adminLevel: number
+      isoCode?: string
+      wikidataId: string
+      geonameId: number
+    }>
+    informative: Array<{
+      name: string
+      description?: string
+      isoName?: string
+      order: number
+      isoCode?: string
+      wikidataId?: string
+    }>
+  }
 }
 
 /**
- * Build Open-Meteo Reverse Geocoding API URL
+ * Build BigDataCloud Reverse Geocoding API URL
  * @param lat - Latitude coordinate
  * @param lon - Longitude coordinate
- * @returns Open-Meteo Reverse Geocoding API URL
+ * @returns BigDataCloud API URL
  */
 export function buildReverseGeocodingUrl(lat: number, lon: number): string {
-  const baseUrl = 'https://geocoding-api.open-meteo.com/v1/reverse'
-  return `${baseUrl}?latitude=${lat}&longitude=${lon}&timezone=auto`
+  const baseUrl = 'https://api.bigdatacloud.net/data/reverse-geocode-client'
+  return `${baseUrl}?latitude=${lat}&longitude=${lon}&localityLanguage=en`
 }
 
 /**
  * Fetch location name (city) from coordinates using reverse geocoding
  *
- * Uses Open-Meteo's free reverse geocoding API which requires no authentication.
+ * Uses BigDataCloud's free reverse geocoding API which requires no authentication.
+ * This API is designed for client-side use and has unlimited queries.
  *
  * @param lat - Latitude coordinate
  * @param lon - Longitude coordinate
@@ -547,40 +570,22 @@ export async function fetchLocationName(
         )
       }
 
-      return response.json() as Promise<ReverseGeocodingResponse>
+      return response.json() as Promise<BigDataCloudReverseGeocodeResponse>
     })
 
-    // Check for API error
-    if (data.error) {
-      throw new WeatherApiError(
-        `Reverse geocoding API error: ${data.reason || 'Unknown error'}`,
-        'Unable to determine location name.',
-        true
-      )
-    }
-
-    // Check if we have results
-    if (!data.results || data.results.length === 0) {
-      console.warn('[ReverseGeocoding] No results found for coordinates:', { lat, lon })
+    // Validate response has required city field
+    if (!data.city) {
+      console.warn('[ReverseGeocoding] No city found in response:', { lat, lon })
       // Return empty string to indicate no location name found
       return ''
     }
 
-    // Get the first (most accurate) result
-    const location = data.results[0]
+    // Build location name from city and principalSubdivision (state/province)
+    let locationName = data.city
 
-    // Build location name from available fields
-    // Priority: city > name > admin1
-    let locationName = location.city || location.name || ''
-
-    // Add region/state if available and different from city name
-    if (location.admin1 && location.admin1 !== locationName) {
-      locationName += locationName ? `, ${location.admin1}` : location.admin1
-    }
-
-    // Add country if we still don't have much info
-    if (!location.admin1 && location.country && location.country !== locationName) {
-      locationName += locationName ? `, ${location.country}` : location.country
+    // Add state/province if available and different from city name
+    if (data.principalSubdivision && data.principalSubdivision !== data.city) {
+      locationName += `, ${data.principalSubdivision}`
     }
 
     console.log('[ReverseGeocoding] Location name found:', locationName)

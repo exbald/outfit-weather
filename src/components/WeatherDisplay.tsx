@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { useWeather } from '../hooks/useWeather'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { WeatherSkeleton } from './WeatherSkeleton'
@@ -9,6 +10,45 @@ interface WeatherDisplayProps {
   lon: number
   /** Optional location name to display */
   locationName?: string
+}
+
+/**
+ * Compare two weather data objects to detect changes
+ * Returns object with boolean flags for each field that changed
+ */
+function compareWeatherData(
+  prev: ReturnType<typeof useWeather>['weather'],
+  next: ReturnType<typeof useWeather>['weather']
+): {
+  temperatureChanged: boolean
+  apparentTemperatureChanged: boolean
+  conditionChanged: boolean
+  iconChanged: boolean
+  windSpeedChanged: boolean
+} {
+  if (!prev || !next) {
+    return {
+      temperatureChanged: false,
+      apparentTemperatureChanged: false,
+      conditionChanged: false,
+      iconChanged: false,
+      windSpeedChanged: false
+    }
+  }
+
+  const temperatureChanged = Math.abs(prev.temperature - next.temperature) >= 0.5
+  const apparentTemperatureChanged = Math.abs(prev.apparentTemperature - next.apparentTemperature) >= 0.5
+  const conditionChanged = prev.condition !== next.condition
+  const iconChanged = prev.icon !== next.icon
+  const windSpeedChanged = Math.abs(prev.windSpeed - next.windSpeed) >= 1
+
+  return {
+    temperatureChanged,
+    apparentTemperatureChanged,
+    conditionChanged,
+    iconChanged,
+    windSpeedChanged
+  }
 }
 
 /**
