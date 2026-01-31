@@ -3833,3 +3833,79 @@ Message: "feat: implement manual location entry for permission denied - Feature 
 
 Feature #8 has been marked as passing.
 
+
+================================================================================
+## Session Date: 2025-01-31
+
+## Feature Completed: #42 - Last updated timestamp displays
+
+### What Was Accomplished:
+
+Feature #42 was already fully implemented. This session verified the implementation.
+
+### Verified Implementation:
+
+1. **Cache Age Tracking** (src/hooks/useWeather.ts)
+   - State variable `cacheAge` tracks time since last fetch
+   - Set to 0 for fresh data, getCacheAge() for cached data, -1 for no cache
+   - Updated on: fresh fetch (line 128), cached load (lines 139, 185), cache clear (line 169)
+
+2. **Time Difference Calculation** (src/lib/weatherStorage.ts)
+   - `getCacheAge()` function calculates (now - timestamp) / 1000
+   - Returns age in seconds, or -1 if no cache exists
+   - Uses timestamp stored in localStorage cache
+
+3. **Relative Time String Display** (src/components/WeatherDisplay.tsx)
+   - `formatCacheAge()` function converts seconds to human-readable format
+   - Display logic:
+     - 0-59 seconds → "Updated just now"
+     - 1-59 minutes → "Updated X mins ago"
+     - 1+ hours → "Updated X hours ago"
+   - Shows at bottom of weather display
+   - "Updating..." during background refresh
+   - "📡 Offline · ..." prefix when using cached data due to API error
+
+### Test Results:
+
+**Automated Test Suite:** 11/11 tests passed (100% pass rate)
+- Fresh data (0s) → "Updated just now" ✅
+- 30 seconds → "Updated just now" ✅
+- 59 seconds → "Updated just now" ✅
+- 1 minute → "Updated 1 min ago" ✅
+- 2 minutes → "Updated 2 mins ago" ✅
+- 30 minutes → "Updated 30 mins ago" ✅
+- 59 minutes → "Updated 59 mins ago" ✅
+- 1 hour → "Updated 1 hour ago" ✅
+- 2 hours → "Updated 2 hours ago" ✅
+- 24 hours → "Updated 24 hours ago" ✅
+- Edge case (negative) → "Updated just now" ✅
+
+### Code Quality:
+- ✅ TypeScript compilation successful
+- ✅ Production build successful
+- ✅ No mock data patterns found
+- ✅ Proper integration with useWeather hook
+- ✅ Accessible (ARIA labels included)
+- ✅ Dark mode support
+
+### Files Created:
+- test-feature-42-last-updated.ts - Automated test suite
+- FEATURE_42_VERIFICATION.md - Comprehensive verification documentation
+
+### Feature Status: ✅ PASSING
+
+Feature #42 has been marked as passing.
+
+---
+
+## Updated Project Status:
+- Total Features: 79
+- Passing: 45
+- In Progress: 4
+- Completion: 57.0%
+
+## Git Commit:
+- f53e2ce docs: verify last updated timestamp displays - Feature #42
+
+================================================================================
+
