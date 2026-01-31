@@ -14,3 +14,8 @@
 8:24:40 PM [vite] (client) page reload test-feature-60-still-fetching.html
 8:24:43 PM [vite] (client) page reload features.db-wal
 8:24:43 PM [vite] (client) page reload features.db-wal
+8:24:59 PM [vite] (client) page reload package.json
+8:25:03 PM [vite] (client) page reload claude-progress.txt
+8:25:06 PM [vite] (client) page reload test-feature-67-aria-settings.html
+8:25:10 PM [vite] vite.config.ts changed, restarting server...
+8:25:10 PM [vite] server restarted.
