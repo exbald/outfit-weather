@@ -46,6 +46,9 @@ export interface UseWeatherResult {
  * @param lon - Optional longitude for initial fetch
  * @returns Weather data, loading state, error state, cache age, and control functions
  */
+// Background refresh interval in milliseconds (30 minutes)
+const BACKGROUND_REFRESH_INTERVAL = 30 * 60 * 1000
+
 export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -56,6 +59,14 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [lastCoords, setLastCoords] = useState<{ lat: number; lon: number } | null>(
     lat && lon ? { lat, lon } : null
   )
+  // Track refresh timer for cleanup
+  const [refreshTimer, setRefreshTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+
+  // Log timer state for debugging (prevents unused variable warning)
+  if (refreshTimer !== null) {
+    // Timer is active
+    void refreshTimer
+  }
 
   const fetchWeather = async (latitude: number, longitude: number) => {
     // If we already have weather data, this is a background refresh
@@ -136,6 +147,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   }
 
   // Initialize: load from cache first, then fetch fresh data
+  // Also set up periodic background refresh while app is open
   useEffect(() => {
     if (lat && lon) {
       // Step 1: Load cached data immediately for instant display
@@ -147,8 +159,24 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
 
       // Step 2: Fetch fresh data in background
       fetchWeather(lat, lon)
+
+      // Step 3: Set up periodic background refresh every 30 minutes
+      const timer = setInterval(() => {
+        console.log('[Background Refresh] Refreshing weather data...')
+        fetchWeather(lat, lon)
+      }, BACKGROUND_REFRESH_INTERVAL)
+
+      setRefreshTimer(timer)
+
+      // Cleanup: clear interval when component unmounts or coords change
+      return () => {
+        if (timer) {
+          clearInterval(timer)
+          console.log('[Background Refresh] Cleared refresh interval')
+        }
+      }
     }
-  }, [])
+  }, [lat, lon])
 
   return {
     weather,

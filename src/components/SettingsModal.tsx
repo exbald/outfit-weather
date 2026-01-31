@@ -45,7 +45,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => setTempUnit('C')}
-                className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all ${
                   tempUnit === 'C'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -56,7 +56,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => setTempUnit('F')}
-                className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all ${
                   tempUnit === 'F'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -76,7 +76,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => setWindUnit('kmh')}
-                className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all ${
                   windUnit === 'kmh'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -87,7 +87,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => setWindUnit('mph')}
-                className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all ${
                   windUnit === 'mph'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -104,7 +104,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
+            className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
           >
             Done
           </button>

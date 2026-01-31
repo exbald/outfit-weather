@@ -22,7 +22,7 @@ export function Layout({ children }: LayoutProps) {
           <h1 className="text-xl font-bold text-gray-800">OutFitWeather</h1>
           <button
             aria-label="Open settings"
-            className="p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
+            className="p-3 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
             type="button"
             onClick={() => setIsSettingsOpen(true)}
           >

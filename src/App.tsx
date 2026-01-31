@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Layout } from './components/Layout'
 import { WeatherDisplay } from './components/WeatherDisplay'
 import { OutfitEmojiTest } from './components/OutfitEmojiTest'
@@ -7,6 +8,8 @@ import { WeatherCacheTest } from './components/WeatherCacheTest'
 import { WindModifierTest } from './components/WindModifierTest'
 import { ServiceWorkerTest } from './components/ServiceWorkerTest'
 import { useGeolocation } from './hooks/useGeolocation'
+import { useAdaptiveBackground } from './hooks/useAdaptiveBackground'
+import { useWeather } from './hooks/useWeather'
 
 /**
  * Location permission screen component
@@ -29,7 +32,7 @@ function LocationPermissionDenied({ onRetry }: { onRetry: () => void }) {
         <div className="space-y-3">
           <button
             onClick={onRetry}
-            className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
+            className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
             type="button"
           >
             Try Again
@@ -57,62 +60,44 @@ function LocationLoading() {
 
 function App() {
   const { position, error: locationError, loading: locationLoading, requestLocation } = useGeolocation()
+  const [weatherForBackground, setWeatherForBackground] = useState<{
+    temperature: number
+    weatherCode: number
+    isDay: number
+  } | null>(null)
+
+  // Fetch weather for background when we have position
+  const { weather: bgWeather } = useWeather(
+    position?.latitude,
+    position?.longitude
+  )
+
+  // Update background weather data when available
+  if (bgWeather && !weatherForBackground) {
+    setWeatherForBackground({
+      temperature: bgWeather.temperature,
+      weatherCode: bgWeather.weatherCode,
+      isDay: bgWeather.isDay,
+    })
+  }
+
+  // Compute adaptive background
+  const { backgroundStyle } = useAdaptiveBackground(
+    weatherForBackground?.temperature ?? null,
+    weatherForBackground?.weatherCode ?? null,
+    weatherForBackground?.isDay ?? null
+  )
 
   // Handle location loading state
   if (locationLoading) {
     return (
-      <Layout>
-        <LocationLoading />
-        <div className="border-t border-gray-200 pt-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
-          <div className="space-y-8">
-            <ServiceWorkerTest />
-            <WeatherCacheTest />
-            <OutfitEmojiTest />
-            <WeatherCodeTest />
-            <WeatherModifierTest />
-            <WindModifierTest />
-          </div>
-        </div>
-      </Layout>
-    )
-  }
-
-  // Handle location error state
-  if (locationError) {
-    return (
-      <Layout>
-        <LocationPermissionDenied onRetry={requestLocation} />
-        <div className="border-t border-gray-200 pt-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
-          <div className="space-y-8">
-            <ServiceWorkerTest />
-            <WeatherCacheTest />
-            <OutfitEmojiTest />
-            <WeatherCodeTest />
-            <WeatherModifierTest />
-            <WindModifierTest />
-          </div>
-        </div>
-      </Layout>
-    )
-  }
-
-  // If we have position, show weather
-  if (position) {
-    return (
-      <Layout>
-        <div className="py-8 space-y-8">
-          {/* Main weather display */}
-          <WeatherDisplay
-            lat={position.latitude}
-            lon={position.longitude}
-          />
-
-          {/* Test components for development */}
+      <div style={backgroundStyle}>
+        <Layout>
+          <LocationLoading />
           <div className="border-t border-gray-200 pt-8">
             <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
             <div className="space-y-8">
+              <ServiceWorkerTest />
               <WeatherCacheTest />
               <OutfitEmojiTest />
               <WeatherCodeTest />
@@ -120,8 +105,59 @@ function App() {
               <WindModifierTest />
             </div>
           </div>
-        </div>
-      </Layout>
+        </Layout>
+      </div>
+    )
+  }
+
+  // Handle location error state
+  if (locationError) {
+    return (
+      <div style={backgroundStyle}>
+        <Layout>
+          <LocationPermissionDenied onRetry={requestLocation} />
+          <div className="border-t border-gray-200 pt-8">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+            <div className="space-y-8">
+              <ServiceWorkerTest />
+              <WeatherCacheTest />
+              <OutfitEmojiTest />
+              <WeatherCodeTest />
+              <WeatherModifierTest />
+              <WindModifierTest />
+            </div>
+          </div>
+        </Layout>
+      </div>
+    )
+  }
+
+  // If we have position, show weather
+  if (position) {
+    return (
+      <div style={backgroundStyle}>
+        <Layout>
+          <div className="py-8 space-y-8">
+            {/* Main weather display */}
+            <WeatherDisplay
+              lat={position.latitude}
+              lon={position.longitude}
+            />
+
+            {/* Test components for development */}
+            <div className="border-t border-gray-200 pt-8">
+              <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+              <div className="space-y-8">
+                <WeatherCacheTest />
+                <OutfitEmojiTest />
+                <WeatherCodeTest />
+                <WeatherModifierTest />
+                <WindModifierTest />
+              </div>
+            </div>
+          </div>
+        </Layout>
+      </div>
     )
   }
 
