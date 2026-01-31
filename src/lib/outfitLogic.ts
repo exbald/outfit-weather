@@ -21,7 +21,8 @@ const FAHRENHEIT_BUCKETS = {
   freezing: { max: 32 }, // < 32°F
   cold: { min: 32, max: 50 }, // 32-50°F
   cool: { min: 50, max: 65 }, // 50-65°F
-  warm: { min: 65, max: 80 }, // 65-80°F
+  mild: { min: 65, max: 70 }, // 65-70°F (transition zone)
+  warm: { min: 70, max: 80 }, // 70-80°F
   hot: { min: 80 }, // > 80°F
 } as const
 
@@ -34,7 +35,8 @@ const CELSIUS_BUCKETS = {
   freezing: { max: 0 }, // < 0°C
   cold: { min: 0, max: 10 }, // 0-10°C
   cool: { min: 10, max: 18 }, // 10-18°C
-  warm: { min: 18, max: 27 }, // 18-27°C
+  mild: { min: 18, max: 21 }, // 18-21°C (transition zone)
+  warm: { min: 21, max: 27 }, // 21-27°C
   hot: { min: 27 }, // > 27°C
 } as const
 
@@ -92,6 +94,13 @@ export function getTemperatureBucket(
     tempF < FAHRENHEIT_BUCKETS.cool.max
   ) {
     return 'cool'
+  }
+
+  if (
+    tempF >= FAHRENHEIT_BUCKETS.mild.min &&
+    tempF < FAHRENHEIT_BUCKETS.mild.max
+  ) {
+    return 'mild'
   }
 
   if (
@@ -157,4 +166,48 @@ export function getTemperatureBucketDescription(
   }
 
   return descriptions[bucket][unit]
+}
+
+/**
+ * Base outfit emoji combinations for each temperature bucket
+ * These are the default outfits before weather modifiers are applied
+ */
+const BASE_OUTFITS: Record<TemperatureBucket, string[]> = {
+  freezing: ['🧥', '🧣', '🧤', '🥾', '🧢'], // Heavy coat, scarf, gloves, boots, hat
+  cold: ['🧥', '🧣', '👖', '🥾'], // Coat, scarf, pants, boots
+  cool: ['🧥', '👕', '👖', '👟'], // Light coat, shirt, pants, sneakers
+  mild: ['🧥', '👕', '👖', '👟'], // Light jacket, shirt, pants, sneakers
+  warm: ['👕', '👖', '👟', '🧢'], // Shirt, pants, sneakers, hat
+  hot: ['👕', '🩳', '👟', '🧢', '🕶️'], // T-shirt, shorts, sneakers, hat, sunglasses
+}
+
+/**
+ * Get outfit emoji combination for a temperature bucket
+ *
+ * @param bucket - The temperature bucket
+ * @returns Array of outfit emojis
+ *
+ * @example
+ * ```ts
+ * getOutfitEmojis('freezing') // ['🧥', '🧣', '🧤', '🥾', '🧢']
+ * getOutfitEmojis('hot') // ['👕', '🩳', '👟', '🧢', '🕶️']
+ * ```
+ */
+export function getOutfitEmojis(bucket: TemperatureBucket): string[] {
+  return [...BASE_OUTFITS[bucket]]
+}
+
+/**
+ * Get outfit emojis as a single string for display
+ *
+ * @param bucket - The temperature bucket
+ * @returns String of concatenated emojis
+ *
+ * @example
+ * ```ts
+ * getOutfitEmojisString('freezing') // '🧥🧣🧤🥾🧢'
+ * ```
+ */
+export function getOutfitEmojisString(bucket: TemperatureBucket): string {
+  return BASE_OUTFITS[bucket].join('')
 }
