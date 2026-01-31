@@ -575,3 +575,96 @@ export function getOutfitWithUV(
   const uvEmojis = getUVModifierEmojis(uvIndex, isDay)
   return [...baseOutfit, ...uvEmojis]
 }
+
+/**
+ * Precipitation probability threshold for adding umbrella (percentage)
+ * Values above this trigger umbrella recommendation
+ */
+const PRECIPITATION_THRESHOLD = 30
+
+/**
+ * Check if precipitation probability exceeds threshold for umbrella recommendation
+ *
+ * @param precipitationProbability - Precipitation probability (0-100)
+ * @returns true if umbrella should be recommended
+ *
+ * @example
+ * ```ts
+ * shouldAddUmbrella(10) // false (below 30% threshold)
+ * shouldAddUmbrella(30) // false (at threshold, not above)
+ * shouldAddUmbrella(31) // true (exceeds 30% threshold)
+ * shouldAddUmbrella(80) // true (high probability of rain)
+ * ```
+ */
+export function shouldAddUmbrella(precipitationProbability: number): boolean {
+  return precipitationProbability > PRECIPITATION_THRESHOLD
+}
+
+/**
+ * Get precipitation modifier emojis based on probability
+ * Adds umbrella when precipitation probability exceeds 30%
+ *
+ * @param precipitationProbability - Precipitation probability (0-100)
+ * @returns Array of additional precipitation-related emojis
+ *
+ * @example
+ * ```ts
+ * getPrecipitationModifierEmojis(10) // [] (low probability)
+ * getPrecipitationModifierEmojis(30) // [] (at threshold)
+ * getPrecipitationModifierEmojis(50) // ['☂️'] (rain expected)
+ * getPrecipitationModifierEmojis(90) // ['☂️'] (high probability)
+ * ```
+ */
+export function getPrecipitationModifierEmojis(precipitationProbability: number): string[] {
+  const additional: string[] = []
+
+  if (shouldAddUmbrella(precipitationProbability)) {
+    additional.push('☂️')
+  }
+
+  return additional
+}
+
+/**
+ * Apply precipitation modifier to outfit emojis
+ * Adds umbrella when precipitation probability exceeds 30%
+ *
+ * @param baseOutfit - Array of outfit emojis
+ * @param precipitationProbability - Precipitation probability (0-100)
+ * @returns Array of outfit emojis with precipitation modifiers applied
+ *
+ * @example
+ * ```ts
+ * getOutfitWithPrecipitation(['👕', '👖', '👟'], 10) // ['👕', '👖', '👟'] (no rain expected)
+ * getOutfitWithPrecipitation(['👕', '👖', '👟'], 50) // ['👕', '👖', '👟', '☂️'] (rain expected)
+ * getOutfitWithPrecipitation(['🧥', '🧣', '👖', '🥾'], 80) // ['🧥', '🧣', '👖', '🥾', '☂️'] (high probability)
+ * ```
+ */
+export function getOutfitWithPrecipitation(
+  baseOutfit: string[],
+  precipitationProbability: number
+): string[] {
+  const precipEmojis = getPrecipitationModifierEmojis(precipitationProbability)
+  return [...baseOutfit, ...precipEmojis]
+}
+
+/**
+ * Get precipitation context message for outfit one-liner
+ * Returns a friendly message when rain is expected
+ *
+ * @param precipitationProbability - Precipitation probability (0-100)
+ * @returns Friendly message or empty string
+ *
+ * @example
+ * ```ts
+ * getPrecipitationMessage(10) // '' (no message needed)
+ * getPrecipitationMessage(50) // 'Rain expected'
+ * getPrecipitationMessage(90) // 'Rain expected'
+ * ```
+ */
+export function getPrecipitationMessage(precipitationProbability: number): string {
+  if (shouldAddUmbrella(precipitationProbability)) {
+    return 'Rain expected'
+  }
+  return ''
+}
