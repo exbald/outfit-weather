@@ -5,6 +5,8 @@ interface WeatherSkeletonProps {
   weatherCode?: number | null
   /** Is day flag for adaptive background calculation */
   isDay?: number | null
+  /** Show "Still fetching..." message after 5 seconds (Feature #60) */
+  showStillFetching?: boolean
 }
 
 /**
@@ -15,11 +17,16 @@ interface WeatherSkeletonProps {
  * visual continuity during loading states. It appears after 1 second
  * of loading to avoid flashing for fast loads.
  *
+ * After 5 seconds of loading, shows a friendly "Still fetching..."
+ * message to reassure users something is happening (Feature #60).
+ *
  * Accessibility:
  * - Uses aria-busy to indicate loading state
  * - Skeleton elements have proper aria-labels
  */
-export function WeatherSkeleton(_props: WeatherSkeletonProps) {
+export function WeatherSkeleton(props: WeatherSkeletonProps) {
+  const { showStillFetching } = props
+
   return (
     <section aria-live="polite" aria-busy="true" aria-label="Loading weather data" className="flex flex-col items-center space-y-6 py-8 animate-pulse">
       {/* Location name skeleton */}
@@ -54,6 +61,18 @@ export function WeatherSkeleton(_props: WeatherSkeletonProps) {
 
       {/* Cache age skeleton */}
       <div className="w-36 h-3 bg-gray-300 dark:bg-gray-600 rounded-full opacity-60"></div>
+
+      {/* Feature #60: "Still fetching..." message after 5 seconds */}
+      {showStillFetching && (
+        <div className="mt-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg max-w-sm">
+          <p className="text-sm text-blue-800 dark:text-blue-200 text-center">
+            Still fetching... <span className="inline-block" aria-hidden="true">🌤️</span>
+          </p>
+          <p className="text-xs text-blue-600 dark:text-blue-300 text-center mt-1">
+            This is taking longer than usual. You may want to check your internet connection.
+          </p>
+        </div>
+      )}
     </section>
   )
 }

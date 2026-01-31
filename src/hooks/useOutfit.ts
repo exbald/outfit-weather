@@ -113,13 +113,21 @@ export function useOutfit(weather: WeatherData | null) {
       'now'
     )
 
-    // Today: Based on today's forecast
+    // Today: Based on today's forecast with WORST weather conditions - Feature #62
+    // Use worst weather expected during the day (e.g., rain later = bring umbrella)
     // Use the lower of max temp or current temp for conservative outfit
     const todayTemp = Math.min(weather.daily.today.temperatureMax, weather.temperature)
+
+    // Use worst weather code from hourly data for today (if available) - Feature #62
+    const todayWeatherCode = weather.daily.today.weatherCodeWorst ?? weather.daily.today.weatherCode
+
+    // Use max wind speed from hourly data for today (if available) - Feature #62
+    const todayWindSpeed = weather.daily.today.windSpeedMax ?? weather.windSpeed
+
     const todayOutfit = createRecommendation(
       todayTemp,
-      weather.daily.today.weatherCode,
-      weather.windSpeed,
+      todayWeatherCode,  // Worst weather code of the day
+      todayWindSpeed,    // Max wind speed of the day
       weather.daily.today.uvIndexMax,
       weather.isDay,
       'today',

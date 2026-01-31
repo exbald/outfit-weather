@@ -88,7 +88,7 @@ function formatCacheAge(seconds: number): string {
  * - Uses semantic HTML and ARIA labels
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
-  const { weather, loading, refreshing, showSkeleton, error, cacheAge, offline, retry } = useWeather(lat, lon)
+  const { weather, loading, refreshing, showSkeleton, showStillFetching, error, cacheAge, offline, retry } = useWeather(lat, lon)
   const { temperatureUnit, windSpeedUnit } = useSettingsContext()
 
   // Feature #57: Pull-to-refresh gesture
@@ -149,6 +149,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
         temperature={weather?.temperature ?? null}
         weatherCode={weather?.weatherCode ?? null}
         isDay={weather?.isDay ?? null}
+        showStillFetching={showStillFetching}
       />
     )
   }

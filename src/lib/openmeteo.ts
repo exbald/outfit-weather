@@ -206,6 +206,12 @@ export interface DailyWeatherData {
   weatherCode: number
   precipitationProbabilityMax: number
   uvIndexMax: number
+  /** Worst weather code during the day (from hourly data) - Feature #62 */
+  weatherCodeWorst?: number
+  /** Maximum wind speed during the day (from hourly data) - Feature #62 */
+  windSpeedMax?: number
+  /** Hourly precipitation probability max (from hourly data) - Feature #62 */
+  precipitationProbabilityHourlyMax?: number
 }
 
 export interface CurrentWeatherResponse {
@@ -250,6 +256,20 @@ export interface CurrentWeatherResponse {
     precipitation_probability_max: number[]
     uv_index_max: number[]
   }
+  hourly_units: {
+    time: string
+    temperature_2m: string
+    weathercode: string
+    windspeed_10m: string
+    precipitation_probability: string
+  }
+  hourly: {
+    time: string[]
+    temperature_2m: number[]
+    weathercode: number[]
+    windspeed_10m: number[]
+    precipitation_probability: number[]
+  }
 }
 
 /**
@@ -273,6 +293,7 @@ export function buildCurrentWeatherUrl(
     longitude: lon.toString(),
     current: 'temperature,apparent_temperature,windspeed,is_day,weathercode',
     daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,uv_index_max',
+    hourly: 'temperature_2m,weathercode,windspeed_10m,precipitation_probability',
     timezone: 'auto',
     temperature_unit: temperatureUnit,
     wind_speed_unit: windSpeedUnit
@@ -446,17 +467,94 @@ export async function fetchCurrentWeather(
 
 /**
  * Parse daily forecast data and extract today and tomorrow
+ * Also calculates worst weather conditions from hourly data - Feature #62
  * @param dailyData - Daily data array from Open-Meteo API
+ * @param hourlyData - Hourly data array from Open-Meteo API
  * @returns Object with today and tomorrow weather data
  * @throws Error if daily data is invalid
  */
-export function parseDailyForecast(dailyData: CurrentWeatherResponse['daily']): {
+export function parseDailyForecast(
+  dailyData: CurrentWeatherResponse['daily'],
+  hourlyData: CurrentWeatherResponse['hourly']
+): {
   today: DailyWeatherData
   tomorrow: DailyWeatherData
 } {
   if (!dailyData.time || dailyData.time.length < 2) {
     throw new Error('Invalid daily data: insufficient days')
   }
+
+  if (!hourlyData.time || hourlyData.time.length < 24) {
+    throw new Error('Invalid hourly data: insufficient hours')
+  }
+
+  // Helper function to find worst weather for a day - Feature #62
+  const findWorstWeatherForDay = (dayDate: string) => {
+    // Find hourly indices that belong to this day
+    const dayStart = dayDate.split('T')[0]
+    const hourlyIndices: number[] = []
+
+    for (let i = 0; i < hourlyData.time.length; i++) {
+      if (hourlyData.time[i].startsWith(dayStart)) {
+        hourlyIndices.push(i)
+      }
+    }
+
+    if (hourlyIndices.length === 0) {
+      console.warn(`[parseDailyForecast] No hourly data found for day: ${dayDate}`)
+      return {
+        weatherCodeWorst: undefined,
+        windSpeedMax: undefined,
+        precipitationProbabilityHourlyMax: undefined
+      }
+    }
+
+    // Find worst weather code (prioritize precipitation > extreme > cloudy > clear)
+    // Weather code categories: clear (0-3), cloudy (45-48), precipitation (51-86), extreme (95-99)
+    const weatherCodeCategoryPriority = (code: number): number => {
+      if (code >= 95) return 4 // extreme (thunderstorm)
+      if (code >= 51) return 3 // precipitation
+      if (code >= 45) return 2 // fog/cloudy
+      return 1 // clear/cloudy
+    }
+
+    let worstWeatherCode = hourlyData.weathercode[hourlyIndices[0]]
+    let maxWindSpeed = hourlyData.windspeed_10m[hourlyIndices[0]]
+    let maxPrecipitationProb = hourlyData.precipitation_probability[hourlyIndices[0]]
+
+    for (const idx of hourlyIndices) {
+      const weatherCode = hourlyData.weathercode[idx]
+      const windSpeed = hourlyData.windspeed_10m[idx]
+      const precipProb = hourlyData.precipitation_probability[idx]
+
+      // Update worst weather code based on category priority
+      if (weatherCodeCategoryPriority(weatherCode) > weatherCodeCategoryPriority(worstWeatherCode)) {
+        worstWeatherCode = weatherCode
+      }
+
+      // Update max wind speed
+      if (windSpeed > maxWindSpeed) {
+        maxWindSpeed = windSpeed
+      }
+
+      // Update max precipitation probability
+      if (precipProb > maxPrecipitationProb) {
+        maxPrecipitationProb = precipProb
+      }
+    }
+
+    return {
+      weatherCodeWorst: worstWeatherCode,
+      windSpeedMax: maxWindSpeed,
+      precipitationProbabilityHourlyMax: maxPrecipitationProb
+    }
+  }
+
+  // Calculate worst weather for today
+  const todayWorst = findWorstWeatherForDay(dailyData.time[0])
+
+  // Calculate worst weather for tomorrow
+  const tomorrowWorst = findWorstWeatherForDay(dailyData.time[1])
 
   // Extract today (index 0) and tomorrow (index 1)
   const today: DailyWeatherData = {
@@ -465,7 +563,8 @@ export function parseDailyForecast(dailyData: CurrentWeatherResponse['daily']): 
     temperatureMin: dailyData.temperature_2m_min[0],
     weatherCode: dailyData.weathercode[0],
     precipitationProbabilityMax: dailyData.precipitation_probability_max[0],
-    uvIndexMax: dailyData.uv_index_max[0]
+    uvIndexMax: dailyData.uv_index_max[0],
+    ...todayWorst
   }
 
   const tomorrow: DailyWeatherData = {
@@ -474,7 +573,8 @@ export function parseDailyForecast(dailyData: CurrentWeatherResponse['daily']): 
     temperatureMin: dailyData.temperature_2m_min[1],
     weatherCode: dailyData.weathercode[1],
     precipitationProbabilityMax: dailyData.precipitation_probability_max[1],
-    uvIndexMax: dailyData.uv_index_max[1]
+    uvIndexMax: dailyData.uv_index_max[1],
+    ...tomorrowWorst
   }
 
   return { today, tomorrow }

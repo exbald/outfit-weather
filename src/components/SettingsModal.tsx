@@ -27,6 +27,7 @@ export function SettingsModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-title"
+      aria-describedby="settings-description"
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
@@ -41,16 +42,27 @@ export function SettingsModal({
           <h2 id="settings-title" className="text-xl font-bold text-gray-800">
             Settings
           </h2>
+          <p id="settings-description" className="text-sm text-gray-600 mt-1">
+            Customize your weather display preferences
+          </p>
         </header>
 
         {/* Settings Options */}
         <section className="p-6 space-y-6" aria-label="Settings options">
           {/* Temperature Unit */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label
+              id="temp-unit-label"
+              className="block text-sm font-medium text-gray-700 mb-3"
+            >
               Temperature Unit
             </label>
-            <div className="flex gap-2" role="group" aria-label="Temperature unit selection">
+            <div
+              className="flex gap-2"
+              role="group"
+              aria-labelledby="temp-unit-label"
+              aria-describedby="temp-unit-description"
+            >
               <button
                 type="button"
                 onClick={() => setTemperatureUnit('C')}
@@ -60,6 +72,7 @@ export function SettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 aria-pressed={temperatureUnit === 'C'}
+                aria-label="Select Celsius for temperature"
               >
                 Celsius (°C)
               </button>
@@ -72,18 +85,30 @@ export function SettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 aria-pressed={temperatureUnit === 'F'}
+                aria-label="Select Fahrenheit for temperature"
               >
                 Fahrenheit (°F)
               </button>
             </div>
+            <p id="temp-unit-description" className="mt-2 text-xs text-gray-500">
+              Choose your preferred temperature display unit
+            </p>
           </div>
 
           {/* Wind Speed Unit */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label
+              id="wind-unit-label"
+              className="block text-sm font-medium text-gray-700 mb-3"
+            >
               Wind Speed Unit
             </label>
-            <div className="flex gap-2" role="group" aria-label="Wind speed unit selection">
+            <div
+              className="flex gap-2"
+              role="group"
+              aria-labelledby="wind-unit-label"
+              aria-describedby="wind-unit-description"
+            >
               <button
                 type="button"
                 onClick={() => setWindSpeedUnit('kmh')}
@@ -93,6 +118,7 @@ export function SettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 aria-pressed={windSpeedUnit === 'kmh'}
+                aria-label="Select kilometers per hour for wind speed"
               >
                 km/h
               </button>
@@ -105,10 +131,14 @@ export function SettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 aria-pressed={windSpeedUnit === 'mph'}
+                aria-label="Select miles per hour for wind speed"
               >
                 mph
               </button>
             </div>
+            <p id="wind-unit-description" className="mt-2 text-xs text-gray-500">
+              Choose your preferred wind speed display unit
+            </p>
           </div>
         </section>
 
@@ -118,6 +148,7 @@ export function SettingsModal({
             type="button"
             onClick={onClose}
             className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors text-lg"
+            aria-label="Close settings dialog"
           >
             Done
           </button>

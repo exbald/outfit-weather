@@ -283,27 +283,27 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 ))}
               </div>
 
-              {/* Large emoji outfit display */}
+              {/* Large emoji outfit display and one-liner - both in aria-live region */}
               <div
                 id="outfit-panel"
                 role="tabpanel"
                 aria-live="polite"
-                aria-label={`Outfit for ${activeView}`}
+                aria-label={`Outfit recommendation for ${activeView}: ${displayOutfit.emojis}, ${displayOutfit.oneLiner}`}
                 className="text-center mb-3"
               >
                 <div
                   className="text-6xl leading-none transition-all duration-300"
                   role="img"
-                  aria-label={`Outfit: ${displayOutfit.emojis}`}
+                  aria-label={`Outfit items: ${displayOutfit.emojis}`}
                 >
                   {displayOutfit.emojis}
                 </div>
-              </div>
 
-              {/* Friendly one-liner text */}
-              <p className={`text-center text-xl font-medium ${textColors.primary} transition-all duration-300`}>
-                {displayOutfit.oneLiner}
-              </p>
+                {/* Friendly one-liner text - announced by screen reader */}
+                <p className={`text-center text-xl font-medium ${textColors.primary} transition-all duration-300 mt-3`}>
+                  {displayOutfit.oneLiner}
+                </p>
+              </div>
 
               {/* High/Low temperature display for Today and Tomorrow views (Feature #61) */}
               {(activeView === 'today' || activeView === 'tomorrow') && displayOutfit.highTemp !== undefined && displayOutfit.lowTemp !== undefined && (

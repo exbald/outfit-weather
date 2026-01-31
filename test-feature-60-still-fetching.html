@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature #60 Test: "Still fetching..." after 5 seconds</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .test-section {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .pass {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .fail {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    code {
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #app-frame {
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      width: 100%;
+      height: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Feature #60: "Still fetching..." after 5 seconds</h1>
+
+  <div class="test-section">
+    <h2>Test Overview</h2>
+    <p><strong>Feature:</strong> If loading exceeds 5 seconds, show "Still fetching..." message to reassure users.</p>
+    <p><strong>Implementation:</strong></p>
+    <ul>
+      <li>Added <code>showStillFetching</code> state to <code>useWeather</code> hook</li>
+      <li>Set 5-second timeout in <code>fetchWeather</code> function</li>
+      <li>Updated <code>WeatherSkeleton</code> to display friendly message</li>
+      <li>Message includes suggestion to check internet connection</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>Live Test</h2>
+    <p>To test this feature, we need to simulate a slow API response:</p>
+    <ol>
+      <li>Open browser DevTools (F12)</li>
+      <li>Go to Network tab</li>
+      <li>Select "Slow 3G" throttling</li>
+      <li>Reload the app below</li>
+      <li>Wait 5+ seconds</li>
+      <li>Verify blue "Still fetching..." message appears</li>
+    </ol>
+
+    <div style="margin-top: 20px;">
+      <button onclick="loadApp()">Load App</button>
+      <button onclick="clearCache()">Clear Cache & Reload</button>
+    </div>
+
+    <iframe id="app-frame" src="about:blank"></iframe>
+  </div>
+
+  <div class="test-section">
+    <h2>Verification Checklist</h2>
+    <div id="checklist"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test Results</h2>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const checklist = [
+      { id: 1, text: 'Skeleton UI appears after 1 second', tested: false },
+      { id: 2, text: '"Still fetching..." message appears after 5 seconds', tested: false },
+      { id: 3, text: 'Message includes friendly text about checking connection', tested: false },
+      { id: 4, text: 'Message has blue background (bg-blue-50)', tested: false },
+      { id: 5, text: 'Message is accessible (aria-live region)', tested: false },
+      { id: 6, text: 'Message clears when data loads successfully', tested: false }
+    ];
+
+    function renderChecklist() {
+      const container = document.getElementById('checklist');
+      container.innerHTML = checklist.map(item => `
+        <div class="test-result ${item.tested ? 'pass' : 'info'}">
+          <input type="checkbox" id="check-${item.id}" ${item.tested ? 'checked' : ''}
+                 onchange="toggleCheck(${item.id})">
+          <label for="check-${item.id}">${item.text}</label>
+        </div>
+      `).join('');
+    }
+
+    function toggleCheck(id) {
+      const item = checklist.find(c => c.id === id);
+      if (item) {
+        item.tested = !item.tested;
+        renderChecklist();
+        updateResults();
+      }
+    }
+
+    function updateResults() {
+      const tested = checklist.filter(c => c.tested).length;
+      const total = checklist.length;
+      const resultsDiv = document.getElementById('results');
+
+      if (tested === total) {
+        resultsDiv.innerHTML = `<div class="test-result pass">✅ All ${total} tests passed!</div>`;
+      } else {
+        resultsDiv.innerHTML = `<div class="test-result info">Progress: ${tested}/${total} tests verified</div>`;
+      }
+    }
+
+    function loadApp() {
+      const iframe = document.getElementById('app-frame');
+      iframe.src = '/';
+    }
+
+    function clearCache() {
+      localStorage.clear();
+      const iframe = document.getElementById('app-frame');
+      iframe.src = '/';
+      addResult('info', 'Cache cleared. App reloading...');
+    }
+
+    function addResult(type, message) {
+      const resultsDiv = document.getElementById('results');
+      const div = document.createElement('div');
+      div.className = `test-result ${type}`;
+      div.textContent = message;
+      resultsDiv.insertBefore(div, resultsDiv.firstChild);
+    }
+
+    // Initialize
+    renderChecklist();
+    updateResults();
+  </script>
+</body>
+</html>

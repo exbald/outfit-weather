@@ -31,6 +31,7 @@ export interface UseWeatherResult {
   loading: boolean // true only when we have no data at all
   refreshing: boolean // true when we have cached data but are fetching fresh data
   showSkeleton: boolean // true when loading has taken more than 1 second
+  showStillFetching: boolean // true when loading has taken more than 5 seconds (Feature #60)
   error: string | null
   cacheAge: number // Age of cached data in seconds (-1 if no cache)
   offline: boolean // true when showing cached data due to network failure
@@ -60,6 +61,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [loading, setLoading] = useState<boolean>(false)
   const [refreshing, setRefreshing] = useState<boolean>(false)
   const [showSkeleton, setShowSkeleton] = useState<boolean>(false)
+  const [showStillFetching, setShowStillFetching] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number>(-1)
   const [offline, setOffline] = useState<boolean>(false)
@@ -70,11 +72,21 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [refreshTimer, setRefreshTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   // Track skeleton timer for cleanup
   const [skeletonTimer, setSkeletonTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+  // Track "still fetching" timer for cleanup (Feature #60)
+  const [stillFetchingTimer, setStillFetchingTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
   // Log timer state for debugging (prevents unused variable warning)
   if (refreshTimer !== null) {
     // Timer is active
     void refreshTimer
+  }
+  if (skeletonTimer !== null) {
+    // Timer is active
+    void skeletonTimer
+  }
+  if (stillFetchingTimer !== null) {
+    // Timer is active
+    void stillFetchingTimer
   }
 
   const fetchWeather = async (latitude: number, longitude: number) => {
@@ -86,6 +98,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     } else {
       setLoading(true)
       setShowSkeleton(false) // Reset skeleton state
+      setShowStillFetching(false) // Reset "still fetching" state (Feature #60)
     }
     setError(null)
     setOffline(false) // Reset offline state on new fetch
@@ -97,12 +110,19 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
         setShowSkeleton(true)
       }, 1000)
       setSkeletonTimer(timer)
+
+      // Set "still fetching" timeout after 5 seconds (Feature #60)
+      const stillTimer = setTimeout(() => {
+        console.log('[Still Fetching] Loading took >5 seconds, showing friendly message')
+        setShowStillFetching(true)
+      }, 5000)
+      setStillFetchingTimer(stillTimer)
     }
 
     try {
       const data = await fetchCurrentWeather(latitude, longitude)
       const condition = getWeatherCondition(data.current.weathercode)
-      const dailyForecast = parseDailyForecast(data.daily)
+      const dailyForecast = parseDailyForecast(data.daily, data.hourly)
 
       const weatherData: WeatherData = {
         temperature: data.current.temperature,
@@ -148,10 +168,16 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
       setLoading(false)
       setRefreshing(false)
       setShowSkeleton(false)
+      setShowStillFetching(false) // Reset "still fetching" state (Feature #60)
       // Clear skeleton timer
       if (skeletonTimer) {
         clearTimeout(skeletonTimer)
         setSkeletonTimer(null)
+      }
+      // Clear "still fetching" timer (Feature #60)
+      if (stillFetchingTimer) {
+        clearTimeout(stillFetchingTimer)
+        setStillFetchingTimer(null)
       }
     }
   }
@@ -206,6 +232,10 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
           clearTimeout(skeletonTimer)
           console.log('[Skeleton] Cleared skeleton timeout')
         }
+        if (stillFetchingTimer) {
+          clearTimeout(stillFetchingTimer)
+          console.log('[Still Fetching] Cleared still fetching timeout')
+        }
       }
     }
   }, [lat, lon])
@@ -215,6 +245,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     loading,
     refreshing,
     showSkeleton,
+    showStillFetching, // Feature #60: Expose "still fetching" state
     error,
     cacheAge,
     offline,
