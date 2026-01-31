@@ -38,6 +38,7 @@ interface UsePullToRefreshOptions {
  * - Configurable threshold and maximum pull distance
  * - Only works when scrolled to top (prevents accidental triggers)
  * - Supports both touch and mouse drag (for testing)
+ * - Feature #77: Prevents rapid refresh triggers
  * - Accessible - works with keyboard navigation
  *
  * @param options - Configuration options
@@ -59,6 +60,8 @@ export function usePullToRefresh(options: UsePullToRefreshOptions): UsePullToRef
   const currentY = useRef(0)
   const isDragging = useRef(false)
   const containerRef = useRef<HTMLElement | null>(null)
+  const lastRefreshTime = useRef(0)
+  const REFRESH_COOLDOWN_MS = 1000 // Feature #77: Prevent refresh within 1 second
 
   // Check if we're at the top of the scrollable container
   const isAtTop = useCallback(() => {
@@ -111,9 +114,14 @@ export function usePullToRefresh(options: UsePullToRefreshOptions): UsePullToRef
 
     isDragging.current = false
 
+    // Feature #77: Prevent rapid refresh triggers
+    const now = Date.now()
+    const timeSinceLastRefresh = now - lastRefreshTime.current
+
     // Check if we pulled past threshold
-    if (pullDistance >= threshold && !isRefreshing) {
+    if (pullDistance >= threshold && !isRefreshing && timeSinceLastRefresh >= REFRESH_COOLDOWN_MS) {
       // Trigger refresh
+      lastRefreshTime.current = now
       setIsRefreshing(true)
       setPullDistance(0)
 
@@ -128,7 +136,13 @@ export function usePullToRefresh(options: UsePullToRefreshOptions): UsePullToRef
   }
 
   const triggerRefresh = () => {
-    if (isRefreshing) return
+    // Feature #77: Prevent rapid refresh triggers
+    const now = Date.now()
+    const timeSinceLastRefresh = now - lastRefreshTime.current
+
+    if (isRefreshing || timeSinceLastRefresh < REFRESH_COOLDOWN_MS) return
+
+    lastRefreshTime.current = now
     setIsRefreshing(true)
     setPullDistance(0)
 

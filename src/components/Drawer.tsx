@@ -97,7 +97,7 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
     return () => {
       document.removeEventListener('keydown', handleEscapeKey)
     }
-  }, [isExpanded])
+  }, [isExpanded, collapseDrawer])
 
   const touchStartY = useRef<number>(0)
   const touchStartTime = useRef<number>(0)

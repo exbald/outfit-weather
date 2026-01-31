@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature #34: View Indicator - Manual Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .test-container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #1e3a8a;
+    }
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 10px;
+    }
+    .test-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #334155;
+    }
+    .checkbox {
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .preview {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .nav-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn.active {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    .nav-btn:not(.active) {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .nav-btn:not(.active):hover {
+      background: #e5e7eb;
+    }
+    .indicators {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .dot {
+      height: 6px;
+      border-radius: 3px;
+      transition: all 0.3s ease-out;
+    }
+    .dot.active {
+      width: 32px;
+      background: #3b82f6;
+    }
+    .dot:not(.active) {
+      width: 8px;
+      background: #d1d5db;
+    }
+    .outfit-display {
+      font-size: 48px;
+      margin: 20px 0;
+    }
+    .one-liner {
+      font-size: 20px;
+      color: #1e3a8a;
+      margin-top: 10px;
+    }
+    .instructions {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 12px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #1e40af;
+    }
+    code {
+      background: #1e293b;
+      color: #a5f3fc;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Feature #34: View Indicator Displays</h1>
+    <p class="subtitle">Manual Verification Test</p>
+
+    <div class="instructions">
+      <strong>How to test:</strong> Click each navigation button (Now, Today, Tomorrow) and verify that:
+      <br>1. The active dot is wider (32px) and blue
+      <br>2. The inactive dots are narrow (8px) and gray
+      <br>3. The transition is smooth (300ms animation)
+    </div>
+
+    <div class="preview">
+      <div class="nav-buttons">
+        <button class="nav-btn active" data-view="now">Now</button>
+        <button class="nav-btn" data-view="today">Today</button>
+        <button class="nav-btn" data-view="tomorrow">Tomorrow</button>
+      </div>
+
+      <div class="indicators">
+        <div class="dot active" data-indicator="now"></div>
+        <div class="dot" data-indicator="today"></div>
+        <div class="dot" data-indicator="tomorrow"></div>
+      </div>
+
+      <div class="outfit-display">🧥🧣🧤🥾</div>
+      <div class="one-liner">Bundle up!</div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">Visual Verification Checklist</div>
+      <div class="checkbox">
+        <input type="checkbox" id="test1">
+        <label for="test1">Active view dot is wider (32px vs 8px)</label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="test2">
+        <label for="test2">Active view dot is blue (<code>bg-blue-500</code>)</label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="test3">
+        <label for="test3">Inactive view dots are gray (<code>bg-gray-300</code>)</label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="test4">
+        <label for="test4">Transition is smooth (300ms ease-out)</label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="test5">
+        <label for="test5">Indicators positioned below navigation buttons</label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="test6">
+        <label for="test6">Indicator container has <code>aria-hidden="true"</code></label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="test7">
+        <label for="test7">Indicator container has <code>role="presentation"</code></label>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">Accessibility Verification</div>
+      <div class="checkbox">
+        <input type="checkbox" id="a11y1">
+        <label for="a11y1">Navigation tabs already convey active state via <code>aria-selected</code></label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="a11y2">
+        <label for="a11y2">Indicator dots are decorative only (<code>aria-hidden</code>)</label>
+      </div>
+      <div class="checkbox">
+        <input type="checkbox" id="a11y3">
+        <label for="a11y3">No duplicate information exposed to screen readers</label>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <div class="test-title">Code Verification (in Drawer.tsx)</div>
+      <p style="font-size: 14px; color: #64748b; margin-top: 8px;">
+        Look for the view indicator section in the drawer:
+      </p>
+      <pre style="background: #1e293b; color: #a5f3fc; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; margin-top: 10px;"><code>{`{/* View indicator dots (Feature #34) */}
+<div
+  className="flex items-center justify-center gap-3 mb-4"
+  role="presentation"
+  aria-hidden="true"
+>
+  {(['now', 'today', 'tomorrow'] as const).map((view) => (
+    <div
+      key={view}
+      className={`
+        h-1.5 rounded-full transition-all duration-300 ease-out
+        ${activeView === view
+          ? 'w-8 bg-blue-500'
+          : 'w-2 bg-gray-300'
+        }
+      `}
+    />
+  ))}
+</div>`}</code></pre>
+    </div>
+  </div>
+
+  <script>
+    // Simulate the view switching behavior
+    const buttons = document.querySelectorAll('.nav-btn');
+    const dots = document.querySelectorAll('.dot');
+    const outfitDisplay = document.querySelector('.outfit-display');
+    const oneLiner = document.querySelector('.one-liner');
+
+    const outfits = {
+      now: { emoji: '🧥🧣🧤🥾', text: 'Bundle up!' },
+      today: { emoji: '👕👖🧥', text: 'Starts cool, layers!' },
+      tomorrow: { emoji: '👕🩳👟', text: 'Perfect day!' }
+    };
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const view = btn.dataset.view;
+
+        // Update button states
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update dot states
+        dots.forEach(dot => {
+          if (dot.dataset.indicator === view) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+
+        // Update outfit display
+        outfitDisplay.textContent = outfits[view].emoji;
+        oneLiner.textContent = outfits[view].text;
+      });
+    });
+  </script>
+</body>
+</html>
