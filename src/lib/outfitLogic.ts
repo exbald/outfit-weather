@@ -75,42 +75,80 @@ export function getTemperatureBucket(
   temperature: number,
   unit: TemperatureUnit = 'F'
 ): TemperatureBucket {
-  // Normalize to Fahrenheit for consistent bucket logic
-  const tempF = unit === 'C' ? celsiusToFahrenheit(temperature) : temperature
+  // Small epsilon to handle floating-point precision issues
+  const epsilon = 0.01
 
-  if (tempF < FAHRENHEIT_BUCKETS.freezing.max) {
+  if (unit === 'C') {
+    // Use Celsius boundaries directly
+    if (temperature < CELSIUS_BUCKETS.freezing.max - epsilon) {
+      return 'freezing'
+    }
+
+    if (
+      temperature >= CELSIUS_BUCKETS.cold.min - epsilon &&
+      temperature < CELSIUS_BUCKETS.cold.max
+    ) {
+      return 'cold'
+    }
+
+    if (
+      temperature >= CELSIUS_BUCKETS.cool.min - epsilon &&
+      temperature < CELSIUS_BUCKETS.cool.max
+    ) {
+      return 'cool'
+    }
+
+    if (
+      temperature >= CELSIUS_BUCKETS.mild.min - epsilon &&
+      temperature < CELSIUS_BUCKETS.mild.max
+    ) {
+      return 'mild'
+    }
+
+    if (
+      temperature >= CELSIUS_BUCKETS.warm.min - epsilon &&
+      temperature < CELSIUS_BUCKETS.warm.max
+    ) {
+      return 'warm'
+    }
+
+    return 'hot'
+  }
+
+  // Fahrenheit logic
+  if (temperature < FAHRENHEIT_BUCKETS.freezing.max) {
     return 'freezing'
   }
 
   if (
-    tempF >= FAHRENHEIT_BUCKETS.cold.min &&
-    tempF < FAHRENHEIT_BUCKETS.cold.max
+    temperature >= FAHRENHEIT_BUCKETS.cold.min &&
+    temperature < FAHRENHEIT_BUCKETS.cold.max
   ) {
     return 'cold'
   }
 
   if (
-    tempF >= FAHRENHEIT_BUCKETS.cool.min &&
-    tempF < FAHRENHEIT_BUCKETS.cool.max
+    temperature >= FAHRENHEIT_BUCKETS.cool.min &&
+    temperature < FAHRENHEIT_BUCKETS.cool.max
   ) {
     return 'cool'
   }
 
   if (
-    tempF >= FAHRENHEIT_BUCKETS.mild.min &&
-    tempF < FAHRENHEIT_BUCKETS.mild.max
+    temperature >= FAHRENHEIT_BUCKETS.mild.min &&
+    temperature < FAHRENHEIT_BUCKETS.mild.max
   ) {
     return 'mild'
   }
 
   if (
-    tempF >= FAHRENHEIT_BUCKETS.warm.min &&
-    tempF < FAHRENHEIT_BUCKETS.warm.max
+    temperature >= FAHRENHEIT_BUCKETS.warm.min &&
+    temperature < FAHRENHEIT_BUCKETS.warm.max
   ) {
     return 'warm'
   }
 
-  // tempF >= FAHRENHEIT_BUCKETS.hot.min
+  // temperature >= FAHRENHEIT_BUCKETS.hot.min
   return 'hot'
 }
 
@@ -294,12 +332,6 @@ export function isSnowWeather(weatherCode: number): boolean {
 const WIND_THRESHOLD_KMH = 15
 
 /**
- * Wind speed threshold for recommending windbreaker (mph)
- * Values above this are considered "windy"
- */
-const WIND_THRESHOLD_MPH = 9.3
-
-/**
  * Convert wind speed from km/h to mph
  */
 export function kmhToMph(kmh: number): number {
@@ -388,15 +420,18 @@ export function getWeatherModifier(
 const WEATHER_MODIFIER_EMOJIS: Record<WeatherModifier, string[]> = {
   rain: ['☂️'], // Umbrella for rain
   snow: ['🧣', '🧤'], // Extra scarf and gloves for snow
+  wind: ['🧥'], // Windbreaker for windy conditions
   none: [], // No additional items
 }
 
 /**
  * Apply weather modifier to base outfit emojis
- * Adds appropriate gear based on weather conditions
+ * Adds appropriate gear based on weather conditions and wind speed
  *
  * @param bucket - The temperature bucket
  * @param weatherCode - Open-Meteo weather code
+ * @param windSpeed - Wind speed value (default: 0)
+ * @param windSpeedUnit - Wind speed unit (default: 'kmh')
  * @returns Array of outfit emojis with weather modifiers applied
  *
  * @example
@@ -409,14 +444,19 @@ const WEATHER_MODIFIER_EMOJIS: Record<WeatherModifier, string[]> = {
  *
  * // Clear mild day
  * getOutfitWithWeather('mild', 0) // ['🧥', '👕', '👖', '👟']
+ *
+ * // Windy cool day
+ * getOutfitWithWeather('cool', 2, 20, 'kmh') // ['🧥', '👕', '👖', '👟', '🧥']
  * ```
  */
 export function getOutfitWithWeather(
   bucket: TemperatureBucket,
-  weatherCode: number
+  weatherCode: number,
+  windSpeed = 0,
+  windSpeedUnit: WindSpeedUnit = 'kmh'
 ): string[] {
   const baseOutfit = getOutfitEmojis(bucket)
-  const modifier = getWeatherModifier(weatherCode)
+  const modifier = getWeatherModifier(weatherCode, windSpeed, windSpeedUnit)
   const additionalEmojis = WEATHER_MODIFIER_EMOJIS[modifier]
 
   // Return base outfit with additional weather-specific items
