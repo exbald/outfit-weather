@@ -7,6 +7,7 @@ export interface CachedWeatherData {
   /** Cached weather data */
   data: {
     temperature: number
+    apparentTemperature: number
     weatherCode: number
     condition: string
     icon: string

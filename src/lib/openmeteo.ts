@@ -220,6 +220,7 @@ export interface CurrentWeatherResponse {
     time: string
     interval: string
     temperature: string
+    apparent_temperature: string
     windspeed: string
     is_day: string
     weathercode: string
@@ -228,6 +229,7 @@ export interface CurrentWeatherResponse {
     time: string
     interval: number
     temperature: number
+    apparent_temperature: number
     windspeed: number
     is_day: number
     weathercode: number
@@ -269,7 +271,7 @@ export function buildCurrentWeatherUrl(
   const params = new URLSearchParams({
     latitude: lat.toString(),
     longitude: lon.toString(),
-    current: 'temperature,windspeed,is_day,weathercode',
+    current: 'temperature,apparent_temperature,windspeed,is_day,weathercode',
     daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,uv_index_max',
     timezone: 'auto',
     temperature_unit: temperatureUnit,
@@ -476,4 +478,134 @@ export function parseDailyForecast(dailyData: CurrentWeatherResponse['daily']): 
   }
 
   return { today, tomorrow }
+}
+
+/**
+ * Response from Open-Meteo Reverse Geocoding API
+ */
+export interface ReverseGeocodingResponse {
+  results?: Array<{
+    id: number
+    name: string
+    latitude: number
+    longitude: number
+    country?: string
+    country_code?: string
+    region?: string
+    region_code?: string
+    postcode?: string
+    city?: string
+    population?: number
+    admin1?: string
+    admin2?: string
+    admin3?: string
+    admin4?: string
+  }>
+  error?: boolean
+  reason?: string
+}
+
+/**
+ * Build Open-Meteo Reverse Geocoding API URL
+ * @param lat - Latitude coordinate
+ * @param lon - Longitude coordinate
+ * @returns Open-Meteo Reverse Geocoding API URL
+ */
+export function buildReverseGeocodingUrl(lat: number, lon: number): string {
+  const baseUrl = 'https://geocoding-api.open-meteo.com/v1/reverse'
+  return `${baseUrl}?latitude=${lat}&longitude=${lon}&timezone=auto`
+}
+
+/**
+ * Fetch location name (city) from coordinates using reverse geocoding
+ *
+ * Uses Open-Meteo's free reverse geocoding API which requires no authentication.
+ *
+ * @param lat - Latitude coordinate
+ * @param lon - Longitude coordinate
+ * @returns Promise with location name (e.g., "San Francisco, CA" or "London")
+ * @throws WeatherApiError if fetch fails or returns invalid data
+ */
+export async function fetchLocationName(
+  lat: number,
+  lon: number
+): Promise<string> {
+  const url = buildReverseGeocodingUrl(lat, lon)
+
+  console.log('[ReverseGeocoding] Fetching location name for:', { lat, lon })
+
+  try {
+    const data = await retryWithBackoff(async () => {
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        const errorInfo = getErrorMessageForStatus(response.status, response.statusText)
+        throw new WeatherApiError(
+          errorInfo.technical,
+          errorInfo.user,
+          errorInfo.isRetryable
+        )
+      }
+
+      return response.json() as Promise<ReverseGeocodingResponse>
+    })
+
+    // Check for API error
+    if (data.error) {
+      throw new WeatherApiError(
+        `Reverse geocoding API error: ${data.reason || 'Unknown error'}`,
+        'Unable to determine location name.',
+        true
+      )
+    }
+
+    // Check if we have results
+    if (!data.results || data.results.length === 0) {
+      console.warn('[ReverseGeocoding] No results found for coordinates:', { lat, lon })
+      // Return empty string to indicate no location name found
+      return ''
+    }
+
+    // Get the first (most accurate) result
+    const location = data.results[0]
+
+    // Build location name from available fields
+    // Priority: city > name > admin1
+    let locationName = location.city || location.name || ''
+
+    // Add region/state if available and different from city name
+    if (location.admin1 && location.admin1 !== locationName) {
+      locationName += locationName ? `, ${location.admin1}` : location.admin1
+    }
+
+    // Add country if we still don't have much info
+    if (!location.admin1 && location.country && location.country !== locationName) {
+      locationName += locationName ? `, ${location.country}` : location.country
+    }
+
+    console.log('[ReverseGeocoding] Location name found:', locationName)
+
+    return locationName
+  } catch (error) {
+    // Re-throw WeatherApiError as-is
+    if (error instanceof WeatherApiError) {
+      throw error
+    }
+
+    // Wrap network errors
+    if (error instanceof TypeError) {
+      throw new WeatherApiError(
+        `Network error: ${error.message}`,
+        'No internet connection. Please check your network.',
+        true
+      )
+    }
+
+    // Wrap unknown errors
+    throw new WeatherApiError(
+      `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      'Something went wrong. Please try again.',
+      true
+    )
+  }
 }

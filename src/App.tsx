@@ -15,6 +15,7 @@ import { useAdaptiveTextColors } from './hooks/useAdaptiveTextColors'
 import { useWeather } from './hooks/useWeather'
 import { useOutfit } from './hooks/useOutfit'
 import { usePwaInstall } from './hooks/usePwaInstall'
+import { useLocationName } from './hooks/useLocationName'
 
 /**
  * Location permission prompt screen component
@@ -290,6 +291,7 @@ function ManualLocationEntry({
 function App() {
   const { position, error: locationError, loading: locationLoading, requestLocation, permissionShown, grantPermission } = useGeolocation()
   const { isInstallable, promptInstall } = usePwaInstall()
+  // Manual location entry state
   const [manualLocation, setManualLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [showManualEntry, setShowManualEntry] = useState(false)
   const [weatherForBackground, setWeatherForBackground] = useState<{
@@ -297,6 +299,13 @@ function App() {
     weatherCode: number
     isDay: number
   } | null>(null)
+
+  // Handlers for manual location (used in LocationPermissionDenied and ManualLocationEntry)
+  const handleManualLocationClick = () => setShowManualEntry(true)
+  const handleManualLocationSubmit = (lat: number, lon: number) => {
+    setManualLocation({ latitude: lat, longitude: lon })
+    setShowManualEntry(false)
+  }
 
   // Fetch weather for background when we have position (GPS or manual)
   const currentPosition = position || manualLocation
@@ -337,10 +346,7 @@ function App() {
       <div style={backgroundStyle}>
         <Layout>
           <ManualLocationEntry
-            onSubmit={(lat, lon) => {
-              setManualLocation({ latitude: lat, longitude: lon })
-              setShowManualEntry(false)
-            }}
+            onSubmit={handleManualLocationSubmit}
             onCancel={() => setShowManualEntry(false)}
             textColors={textColors}
           />
@@ -435,7 +441,7 @@ function App() {
         <Layout>
           <LocationPermissionDenied
             onRetry={requestLocation}
-            onManualLocation={() => setShowManualEntry(true)}
+            onManualLocation={handleManualLocationClick}
             textColors={textColors}
           />
           <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
@@ -457,8 +463,8 @@ function App() {
   }
 
   // If we have position (GPS or manual), show weather
-  const currentPosition = position || manualLocation
-  if (currentPosition) {
+  const positionForDisplay = position || manualLocation
+  if (positionForDisplay) {
     const currentOutfit = getCurrentOutfit()
     return (
       <div style={backgroundStyle}>
@@ -471,8 +477,8 @@ function App() {
           <div className="py-8 space-y-8">
             {/* Main weather display */}
             <WeatherDisplay
-              lat={currentPosition.latitude}
-              lon={currentPosition.longitude}
+              lat={positionForDisplay.latitude}
+              lon={positionForDisplay.longitude}
             />
 
             {/* Test components for development */}
@@ -484,6 +490,7 @@ function App() {
                 <WeatherCodeTest />
                 <WeatherModifierTest />
                 <WindModifierTest />
+                <UVModifierTest />
               </div>
             </section>
           </div>

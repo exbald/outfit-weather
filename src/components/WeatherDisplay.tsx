@@ -140,6 +140,12 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
         <p className={`text-7xl font-bold tracking-tight ${textColors.primary}`}>
           {Math.round(weather.temperature)}°
         </p>
+        {/* Feels like temperature - shown when differs from actual by >2° */}
+        {Math.abs(weather.temperature - weather.apparentTemperature) > 2 && (
+          <p className={`text-lg mt-1 ${textColors.secondary}`}>
+            Feels like {Math.round(weather.apparentTemperature)}°
+          </p>
+        )}
       </section>
 
       {/* Weather condition text */}

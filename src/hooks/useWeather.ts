@@ -9,6 +9,7 @@ import {
 
 export interface WeatherData {
   temperature: number
+  apparentTemperature: number
   weatherCode: number
   condition: string
   icon: string
@@ -105,6 +106,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
 
       const weatherData: WeatherData = {
         temperature: data.current.temperature,
+        apparentTemperature: data.current.apparent_temperature,
         weatherCode: data.current.weathercode,
         condition: condition.description,
         icon: condition.icon,
