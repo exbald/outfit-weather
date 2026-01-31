@@ -68,3 +68,55 @@ Feature #11 has been marked as passing.
 
 ## Next Steps:
 Continue with the next pending feature in the Weather API category.
+
+[Testing] Regression Test for Feature #27 - Drawer Collapsed State
+======================================================================
+Date: 2025-01-31
+Status: ✅ PASSED - No regression detected
+
+Tests Run:
+1. ✅ Drawer component file exists
+2. ✅ Drawer exports a named export
+3. ✅ Collapsed state has handle indicator
+4. ✅ Collapsed state has swipe hint text
+5. ✅ Drawer fixed at screen bottom
+6. ✅ Frosted glass effect applied
+7. ✅ Rounded top corners for drawer
+8. ✅ Drawer has high z-index
+9. ✅ Drawer has aria-label (accessibility)
+10. ✅ Drawer has toggle state
+11. ✅ Layout imports and uses Drawer
+12. ✅ Drawer has max-width container
+13. ✅ Drawer has click handler
+14. ✅ Drawer has shadow for depth
+15. ✅ Drawer has transition for smooth animation
+
+Build Verification:
+✅ Production build succeeds (tsc + vite build)
+✅ No TypeScript type errors
+✅ Dev server running on http://localhost:5173
+
+Feature Status: Still PASSING - No issues found
+
+Testing session complete - Feature #27 verified successfully
+[Testing] Feature #5 Regression Test - Tailwind CSS styles load
+=== VERIFICATION STEPS ===
+1. ✓ Checked Tailwind config exists (tailwind.config.js)
+2. ✓ Verified CSS is imported in main.tsx
+3. ✓ Checked CSS source file exists (src/styles/index.css)
+4. ✓ Built the app successfully (npm run build)
+5. ✓ Verified CSS bundle is generated (dist/assets/index-BQAzcit4.css - 21.75 kB)
+6. ✓ Confirmed Tailwind v4.1.18 header in CSS bundle
+7. ✓ Verified utility classes exist in compiled CSS:
+   - .flex { display:flex }
+   - .text-xl 
+   - .bg-blue-500
+   - .rounded-lg
+8. ✓ Checked components use Tailwind classes extensively
+9. ✓ Development server serves CSS correctly
+10. ✓ Production build has CSS linked properly
+
+=== RESULTS ===
+All verification steps passed. Tailwind CSS v4.1.18 is properly configured and working.
+Utility classes (bg-*, text-*, flex, etc.) are correctly applied and bundled.
+Feature #5: PASSING (No regression found)
