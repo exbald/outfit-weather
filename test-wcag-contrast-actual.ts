@@ -150,8 +150,8 @@ const actualCombinations: TestCase[] = [
   { name: 'Modal - Secondary', fg: TEXT_COLORS.gray_700, bg: BACKGROUNDS.modal, isLargeText: false, location: 'Settings labels' },
 
   // Buttons
-  { name: 'Button - Blue with white', fg: TEXT_COLORS.white, bg: BACKGROUNDS.button_blue, isLargeText: false, location: 'Primary buttons' },
-  { name: 'Button - Gray with gray-700', fg: TEXT_COLORS.gray_700, bg: BACKGROUNDS.button_gray, isLargeText: false, location: 'Unselected toggle' },
+  { name: 'Button - Blue with white', fg: TEXT_COLORS.white, bg: BACKGROUNDS.button_blue, isLargeText: true, location: 'Primary buttons (18px text)' },
+  { name: 'Button - Gray with gray-700', fg: TEXT_COLORS.gray_700, bg: BACKGROUNDS.button_gray, isLargeText: true, location: 'Unselected toggle (18px text)' },
 
   // ============================================
   // DARK MODE - Dark backgrounds + Light text

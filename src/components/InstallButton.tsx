@@ -34,7 +34,7 @@ export function InstallButton({ isInstallable, onInstall }: InstallButtonProps) 
             <div className="flex gap-2">
               <button
                 onClick={onInstall}
-                className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium text-sm"
+                className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
                 type="button"
               >
                 Install

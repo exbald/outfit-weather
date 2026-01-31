@@ -90,7 +90,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => setWindUnit('mph')}
-                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
                   windUnit === 'mph'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
