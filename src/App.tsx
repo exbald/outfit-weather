@@ -4,6 +4,7 @@ import { OutfitEmojiTest } from './components/OutfitEmojiTest'
 import { WeatherCodeTest } from './components/WeatherCodeTest'
 import { WeatherModifierTest } from './components/WeatherModifierTest'
 import { WeatherCacheTest } from './components/WeatherCacheTest'
+import { WindModifierTest } from './components/WindModifierTest'
 
 function App() {
   // Using San Francisco coordinates for demonstration
@@ -28,6 +29,7 @@ function App() {
             <OutfitEmojiTest />
             <WeatherCodeTest />
             <WeatherModifierTest />
+            <WindModifierTest />
           </div>
         </div>
       </div>

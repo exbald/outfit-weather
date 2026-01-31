@@ -26,9 +26,14 @@ function formatCacheAge(seconds: number): string {
 /**
  * WeatherDisplay component
  * Shows current weather information including temperature, condition, and location
+ *
+ * Caching behavior:
+ * - Shows cached data immediately if available
+ * - Displays subtle loading indicator when refreshing in background
+ * - Shows full loading spinner only when no cached data exists
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
-  const { weather, loading, error, cacheAge, retry } = useWeather(lat, lon)
+  const { weather, loading, refreshing, error, cacheAge, retry } = useWeather(lat, lon)
 
   if (loading) {
     return (
@@ -126,7 +131,9 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
 
       {/* Cache age timestamp */}
       <div className="text-center">
-        <p className="text-xs text-gray-400">{formatCacheAge(cacheAge)}</p>
+        <p className="text-xs text-gray-400">
+          {refreshing ? 'Updating...' : formatCacheAge(cacheAge)}
+        </p>
       </div>
     </div>
   )

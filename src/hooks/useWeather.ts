@@ -23,7 +23,8 @@ export interface WeatherData {
 
 export interface UseWeatherResult {
   weather: WeatherData | null
-  loading: boolean
+  loading: boolean // true only when we have no data at all
+  refreshing: boolean // true when we have cached data but are fetching fresh data
   error: string | null
   cacheAge: number // Age of cached data in seconds (-1 if no cache)
   fetchWeather: (lat: number, lon: number) => Promise<void>
@@ -47,6 +48,7 @@ export interface UseWeatherResult {
 export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
+  const [refreshing, setRefreshing] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number>(-1)
   const [lastCoords, setLastCoords] = useState<{ lat: number; lon: number } | null>(
@@ -54,7 +56,14 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   )
 
   const fetchWeather = async (latitude: number, longitude: number) => {
-    setLoading(true)
+    // If we already have weather data, this is a background refresh
+    const isRefresh = weather !== null
+
+    if (isRefresh) {
+      setRefreshing(true)
+    } else {
+      setLoading(true)
+    }
     setError(null)
 
     try {
@@ -87,6 +96,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
       setError(errorMessage)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -126,6 +136,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   return {
     weather,
     loading,
+    refreshing,
     error,
     cacheAge,
     fetchWeather,

@@ -96,10 +96,10 @@ test(
 );
 
 test(
-  'At threshold (9.32 mph) is windy (15 km/h)',
-  isWindy(9.32, 'mph'),
+  'At threshold (9.3206 mph) is windy (15 km/h)',
+  isWindy(9.3206, 'mph'),
   'true',
-  String(isWindy(9.32, 'mph'))
+  String(isWindy(9.3206, 'mph'))
 );
 
 test(
