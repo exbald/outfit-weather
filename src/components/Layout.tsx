@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { ReactNode } from 'react'
 import { Drawer } from './Drawer'
+import { SettingsModal } from './SettingsModal'
 
 interface LayoutProps {
   children: ReactNode
@@ -10,6 +12,8 @@ interface LayoutProps {
  * Provides semantic HTML structure with header, main content area, and drawer placeholder
  */
 export function Layout({ children }: LayoutProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header area - contains app branding and settings button */}
@@ -20,6 +24,7 @@ export function Layout({ children }: LayoutProps) {
             aria-label="Open settings"
             className="p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
             type="button"
+            onClick={() => setIsSettingsOpen(true)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -55,6 +60,12 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Drawer component - for outfit recommendations */}
       <Drawer />
+
+      {/* Settings modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   )
 }

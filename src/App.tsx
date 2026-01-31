@@ -3,6 +3,7 @@ import { WeatherDisplay } from './components/WeatherDisplay'
 import { OutfitEmojiTest } from './components/OutfitEmojiTest'
 import { WeatherCodeTest } from './components/WeatherCodeTest'
 import { WeatherModifierTest } from './components/WeatherModifierTest'
+import { WeatherCacheTest } from './components/WeatherCacheTest'
 
 function App() {
   // Using San Francisco coordinates for demonstration
@@ -23,6 +24,7 @@ function App() {
         <div className="border-t border-gray-200 pt-8">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
           <div className="space-y-8">
+            <WeatherCacheTest />
             <OutfitEmojiTest />
             <WeatherCodeTest />
             <WeatherModifierTest />
