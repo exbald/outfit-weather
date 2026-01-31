@@ -67,6 +67,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
       setLoading(true)
     }
     setError(null)
+    setOffline(false) // Reset offline state on new fetch
 
     try {
       const data = await fetchCurrentWeather(latitude, longitude)
@@ -92,10 +93,24 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
       setWeather(weatherData)
       setLastCoords({ lat: latitude, lon: longitude })
       setCacheAge(0) // Fresh data
+      setOffline(false) // Successfully fetched fresh data, not offline
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to fetch weather data'
-      setError(errorMessage)
+
+      // Check if we have cached data to fall back to
+      const cached = loadWeatherData(latitude, longitude)
+      if (cached) {
+        // Display cached data with offline indicator
+        setWeather(cached)
+        setCacheAge(getCacheAge())
+        setOffline(true)
+        setError(errorMessage) // Keep error for reference, but don't block display
+      } else {
+        // No cached data available, show error
+        setError(errorMessage)
+        setOffline(false)
+      }
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -141,6 +156,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     refreshing,
     error,
     cacheAge,
+    offline,
     fetchWeather,
     retry,
     clearCache
