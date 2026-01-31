@@ -2,6 +2,7 @@ import { useState, useRef, TouchEvent, useEffect } from 'react'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { getFallbackOutfit, type OutfitRecommendation } from '../hooks/useOutfit'
 import { useSettings } from '../hooks/useSettings'
+import { useDrawerSpring } from '../hooks/useSpringAnimation'
 
 /**
  * Drawer component for outfit recommendations
@@ -12,6 +13,7 @@ import { useSettings } from '../hooks/useSettings'
  * - Swipe-up gesture to expand drawer (Feature #28)
  * - Tap outside drawer (backdrop) to close (Feature #30)
  * - Swipe-down gesture or tap handle to collapse
+ * - Spring physics animation (Feature #31)
  * - Keyboard accessible (Escape key to close, Enter/Space to toggle)
  *
  * Accessibility:
@@ -45,10 +47,15 @@ interface DrawerProps {
  * - WCAG AA compliant contrast ratios
  */
 export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  // Spring animation for drawer open/close (Feature #31)
+  const { currentValue: springValue, expand, collapse } = useDrawerSpring()
+
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [activeView, setActiveView] = useState<'now' | 'today' | 'tomorrow'>('now')
+
+  // Determine if drawer is expanded based on spring value
+  const isExpanded = springValue > 0.5
 
   // Get temperature unit setting
   const { settings } = useSettings()
@@ -107,15 +114,19 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
   )
 
   const toggleDrawer = () => {
-    setIsExpanded(!isExpanded)
+    if (isExpanded) {
+      collapse()
+    } else {
+      expand()
+    }
   }
 
   const expandDrawer = () => {
-    setIsExpanded(true)
+    expand()
   }
 
   const collapseDrawer = () => {
-    setIsExpanded(false)
+    collapse()
   }
 
   // Touch start - record initial position and time
@@ -192,11 +203,18 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
         {/* Collapsed state - drawer handle bar */}
         <div
           ref={drawerRef}
-          className="bg-white/80 backdrop-blur-md rounded-t-3xl shadow-lg border-t border-black/5 cursor-pointer transition-transform duration-300 ease-out"
+          className="bg-white/80 backdrop-blur-md rounded-t-3xl shadow-lg border-t border-black/5 cursor-pointer will-change-transform"
           style={{
+            // Combine spring animation value with drag offset
+            // springValue: 0 = collapsed (translated down), 1 = expanded (no translation)
+            // We animate from translateY(100%) to translateY(0)
             transform: isDragging
               ? `translateY(${isExpanded ? dragOffset : -dragOffset}px)`
-              : 'translateY(0)'
+              : `translateY(${(1 - springValue) * 100}%)`,
+            // Smooth scale effect during spring animation
+            scale: isDragging ? 1 : 0.97 + (springValue * 0.03),
+            // Subtle opacity change during animation
+            opacity: 0.5 + (springValue * 0.5),
           }}
           onClick={toggleDrawer}
           onTouchStart={handleTouchStart}

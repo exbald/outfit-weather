@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useWeather } from '../hooks/useWeather'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { WeatherSkeleton } from './WeatherSkeleton'
+import { PullToRefreshIndicator } from './PullToRefreshIndicator'
 import { formatTemperature, formatWindSpeed } from '../lib/unitConversion'
 import { useSettingsContext } from '../contexts/SettingsContext'
 
@@ -88,6 +90,16 @@ function formatCacheAge(seconds: number): string {
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
   const { weather, loading, refreshing, showSkeleton, error, cacheAge, offline, retry } = useWeather(lat, lon)
   const { temperatureUnit, windSpeedUnit } = useSettingsContext()
+
+  // Feature #57: Pull-to-refresh gesture
+  const {
+    pullDistance,
+    canRefresh,
+    isRefreshing: isPullRefreshing,
+    touchHandlers
+  } = usePullToRefresh({
+    onRefresh: retry
+  })
 
   // Track previous weather data for change detection
   const prevWeatherRef = useRef<typeof weather>(null)
@@ -180,125 +192,145 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
   // If we have an error but also have cached weather data, show the weather
   // with a prominent offline indicator at the top
 
+  // Combine refreshing states (useWeather refreshing + pull-to-refresh refreshing)
+  const isRefreshing = refreshing || isPullRefreshing
+
   return (
-    <section aria-label="Current weather" className="flex flex-col items-center space-y-6 py-8">
-      {/* Offline indicator banner - shown when using cached data due to API error */}
-      {error && offline && (
-        <div className="w-full max-w-sm mx-auto px-4">
-          <div
-            role="status"
-            aria-live="polite"
-            className="bg-orange-100 border border-orange-300 rounded-lg px-4 py-3 flex items-start space-x-3"
-          >
-            <span className="text-2xl flex-shrink-0" role="img" aria-label="Offline indicator">
-              📡
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-orange-900">
-                Using cached data
-              </p>
-              <p className="text-xs text-orange-700 mt-1">
-                {error}
-              </p>
+    <div
+      data-pull-container
+      {...touchHandlers}
+      className="w-full"
+      style={{
+        position: 'relative',
+        touchAction: isPullRefreshing ? 'none' : 'auto'
+      }}
+    >
+      {/* Feature #57: Pull-to-refresh indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        canRefresh={canRefresh}
+        isRefreshing={isPullRefreshing}
+      />
+
+      <section aria-label="Current weather" className="flex flex-col items-center space-y-6 py-8">
+        {/* Offline indicator banner - shown when using cached data due to API error */}
+        {error && offline && (
+          <div className="w-full max-w-sm mx-auto px-4">
+            <div
+              role="status"
+              aria-live="polite"
+              className="bg-orange-100 border border-orange-300 rounded-lg px-4 py-3 flex items-start space-x-3"
+            >
+              <span className="text-2xl flex-shrink-0" role="img" aria-label="Offline indicator">
+                📡
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-orange-900">
+                  Using cached data
+                </p>
+                <p className="text-xs text-orange-700 mt-1">
+                  {error}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Location name */}
-      {locationName && (
-        <div className="text-center">
-          <p className={`text-sm font-medium ${textColors.secondary}`}>{locationName}</p>
-        </div>
-      )}
+        {/* Location name */}
+        {locationName && (
+          <div className="text-center">
+            <p className={`text-sm font-medium ${textColors.secondary}`}>{locationName}</p>
+          </div>
+        )}
 
-      {/* Weather icon */}
-      <div
-        className={`text-8xl transition-all duration-300 ease-out ${
-          changes.iconChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-        }`}
-        role="img"
-        aria-label={weather.condition}
-      >
-        {weather.icon}
-      </div>
-
-      {/* Current temperature - prominent display (large text) */}
-      <section aria-label="Temperature">
-        <p
-          className={`text-7xl font-bold tracking-tight transition-all duration-300 ease-out ${
-            textColors.primary} ${changes.temperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+        {/* Weather icon */}
+        <div
+          className={`text-8xl transition-all duration-300 ease-out ${
+            changes.iconChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
           }`}
+          role="img"
+          aria-label={weather.condition}
         >
-          {formatTemperature(weather.temperature, temperatureUnit)}
-        </p>
-        {/* Feels like temperature - shown when differs from actual by >2° */}
-        {Math.abs(weather.temperature - weather.apparentTemperature) > 2 && (
+          {weather.icon}
+        </div>
+
+        {/* Current temperature - prominent display (large text) */}
+        <section aria-label="Temperature">
           <p
-            className={`text-lg mt-1 transition-all duration-300 ease-out ${
-              textColors.secondary} ${changes.apparentTemperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+            className={`text-7xl font-bold tracking-tight transition-all duration-300 ease-out ${
+              textColors.primary} ${changes.temperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
             }`}
           >
-            Feels like {formatTemperature(weather.apparentTemperature, temperatureUnit)}
+            {formatTemperature(weather.temperature, temperatureUnit)}
           </p>
-        )}
-      </section>
-
-      {/* Weather condition text */}
-      <section aria-label="Weather condition">
-        <p
-          className={`text-xl transition-all duration-300 ease-out ${
-            textColors.secondary} ${changes.conditionChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-          }`}
-        >
-          {weather.condition}
-        </p>
-      </section>
-
-      {/* Additional info - wind speed */}
-      <section aria-label="Weather details" className={`flex items-center justify-center space-x-4 text-sm ${textColors.tertiary}`}>
-        <div className={`flex items-center space-x-1 transition-all duration-300 ease-out ${
-          changes.windSpeedChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
-        }`}>
-          <span className="text-lg" role="img" aria-label="Wind">
-            💨
-          </span>
-          <span>{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
-        </div>
-        {weather.isDay === 1 ? (
-          <div className="flex items-center space-x-1">
-            <span className="text-lg" role="img" aria-label="Day">
-              ☀️
-            </span>
-            <span>Day</span>
-          </div>
-        ) : (
-          <div className="flex items-center space-x-1">
-            <span className="text-lg" role="img" aria-label="Night">
-              🌙
-            </span>
-            <span>Night</span>
-          </div>
-        )}
-      </section>
-
-      {/* Location coordinates (small, subtle) */}
-      {!locationName && (
-        <section aria-label="Location coordinates" className="text-center">
-          <p className={`text-xs ${textColors.tertiary}`}>
-            {weather.location.latitude.toFixed(4)}°, {weather.location.longitude.toFixed(4)}°
-          </p>
-          <p className={`text-xs ${textColors.muted}`}>{weather.location.timezone}</p>
+          {/* Feels like temperature - shown when differs from actual by >2° */}
+          {Math.abs(weather.temperature - weather.apparentTemperature) > 2 && (
+            <p
+              className={`text-lg mt-1 transition-all duration-300 ease-out ${
+                textColors.secondary} ${changes.apparentTemperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+              }`}
+            >
+              Feels like {formatTemperature(weather.apparentTemperature, temperatureUnit)}
+            </p>
+          )}
         </section>
-      )}
 
-      {/* Cache age timestamp */}
-      <div className="text-center">
-        <p className={`text-xs ${offline ? 'text-orange-600 font-medium' : textColors.muted}`}>
-          {offline && '📡 '}
-          {refreshing ? 'Updating...' : offline ? `Offline · ${formatCacheAge(cacheAge)}` : formatCacheAge(cacheAge)}
-        </p>
-      </div>
-    </section>
+        {/* Weather condition text */}
+        <section aria-label="Weather condition">
+          <p
+            className={`text-xl transition-all duration-300 ease-out ${
+              textColors.secondary} ${changes.conditionChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+            }`}
+          >
+            {weather.condition}
+          </p>
+        </section>
+
+        {/* Additional info - wind speed */}
+        <section aria-label="Weather details" className={`flex items-center justify-center space-x-4 text-sm ${textColors.tertiary}`}>
+          <div className={`flex items-center space-x-1 transition-all duration-300 ease-out ${
+            changes.windSpeedChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+          }`}>
+            <span className="text-lg" role="img" aria-label="Wind">
+              💨
+            </span>
+            <span>{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
+          </div>
+          {weather.isDay === 1 ? (
+            <div className="flex items-center space-x-1">
+              <span className="text-lg" role="img" aria-label="Day">
+                ☀️
+              </span>
+              <span>Day</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1">
+              <span className="text-lg" role="img" aria-label="Night">
+                🌙
+              </span>
+              <span>Night</span>
+            </div>
+          )}
+        </section>
+
+        {/* Location coordinates (small, subtle) */}
+        {!locationName && (
+          <section aria-label="Location coordinates" className="text-center">
+            <p className={`text-xs ${textColors.tertiary}`}>
+              {weather.location.latitude.toFixed(4)}°, {weather.location.longitude.toFixed(4)}°
+            </p>
+            <p className={`text-xs ${textColors.muted}`}>{weather.location.timezone}</p>
+          </section>
+        )}
+
+        {/* Cache age timestamp */}
+        <div className="text-center">
+          <p className={`text-xs ${offline ? 'text-orange-600 font-medium' : textColors.muted}`}>
+            {offline && '📡 '}
+            {isRefreshing ? 'Updating...' : offline ? `Offline · ${formatCacheAge(cacheAge)}` : formatCacheAge(cacheAge)}
+          </p>
+        </div>
+      </section>
+    </div>
   )
 }
