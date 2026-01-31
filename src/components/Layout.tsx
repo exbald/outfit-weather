@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { ReactNode } from 'react'
 import { Drawer } from './Drawer'
 import { SettingsModal } from './SettingsModal'
@@ -20,10 +20,26 @@ interface LayoutProps {
 /**
  * Main layout component for OutFitWeather app
  * Provides semantic HTML structure with header, main content area, and drawer
+ * Feature #70: Focus restoration for accessibility
  */
 export function Layout({ children, outfits, temperature, weatherCode, isDay }: LayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const { temperatureUnit, windSpeedUnit, setTemperatureUnit, setWindSpeedUnit } = useSettingsContext()
+
+  // Feature #70: Save focus element to restore when modal closes
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  const openSettings = () => {
+    // Save the currently focused element before opening modal
+    triggerRef.current = document.activeElement as HTMLButtonElement
+    setIsSettingsOpen(true)
+  }
+
+  const closeSettings = () => {
+    setIsSettingsOpen(false)
+    // Feature #70: Restore focus to the settings button when modal closes
+    triggerRef.current?.focus()
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -32,10 +48,11 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
         <div className="max-w-md mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-800">OutFitWeather</h1>
           <button
+            ref={triggerRef}
             aria-label="Open settings"
             className="p-3 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
             type="button"
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={openSettings}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -80,7 +97,7 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
       {/* Settings modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={closeSettings}
         temperatureUnit={temperatureUnit}
         windSpeedUnit={windSpeedUnit}
         setTemperatureUnit={setTemperatureUnit}

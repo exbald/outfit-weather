@@ -1,4 +1,4 @@
-import { useState, useRef, TouchEvent, useEffect } from 'react'
+import { useState, useRef, TouchEvent, useEffect, useCallback } from 'react'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { getFallbackOutfit, type OutfitRecommendation } from '../hooks/useOutfit'
 import { useSettings } from '../hooks/useSettings'
@@ -53,6 +53,11 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [activeView, setActiveView] = useState<'now' | 'today' | 'tomorrow'>('now')
+
+  // Feature #77: Prevent rapid interactions from causing glitches
+  const isAnimatingRef = useRef(false)
+  const lastActionTimeRef = useRef(0)
+  const ACTION_DEBOUNCE_MS = 150 // Prevent actions within 150ms of each other
 
   // Determine if drawer is expanded based on spring value
   const isExpanded = springValue > 0.5
@@ -113,21 +118,67 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
     isDay ?? 1
   )
 
-  const toggleDrawer = () => {
+  // Feature #77: Debounced drawer actions to prevent rapid interaction glitches
+  const canPerformAction = useCallback(() => {
+    const now = Date.now()
+    const timeSinceLastAction = now - lastActionTimeRef.current
+
+    // Block action if too soon after previous action
+    if (timeSinceLastAction < ACTION_DEBOUNCE_MS) {
+      return false
+    }
+
+    // Block action if animation is in progress
+    if (isAnimatingRef.current) {
+      return false
+    }
+
+    return true
+  }, [])
+
+  const toggleDrawer = useCallback(() => {
+    if (!canPerformAction()) return
+
+    lastActionTimeRef.current = Date.now()
+    isAnimatingRef.current = true
+
+    // Reset animation flag after animation completes (estimated 400ms)
+    setTimeout(() => {
+      isAnimatingRef.current = false
+    }, 400)
+
     if (isExpanded) {
       collapse()
     } else {
       expand()
     }
-  }
+  }, [isExpanded, canPerformAction, expand, collapse])
 
-  const expandDrawer = () => {
+  const expandDrawer = useCallback(() => {
+    if (!canPerformAction()) return
+
+    lastActionTimeRef.current = Date.now()
+    isAnimatingRef.current = true
+
+    setTimeout(() => {
+      isAnimatingRef.current = false
+    }, 400)
+
     expand()
-  }
+  }, [canPerformAction, expand])
 
-  const collapseDrawer = () => {
+  const collapseDrawer = useCallback(() => {
+    if (!canPerformAction()) return
+
+    lastActionTimeRef.current = Date.now()
+    isAnimatingRef.current = true
+
+    setTimeout(() => {
+      isAnimatingRef.current = false
+    }, 400)
+
     collapse()
-  }
+  }, [canPerformAction, collapse])
 
   // Touch start - record initial position and time
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
@@ -258,7 +309,7 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
 
               {/* Navigation tabs/pills */}
               <div
-                className="flex items-center justify-center gap-2 mb-4"
+                className="flex items-center justify-center gap-2 mb-3"
                 role="tablist"
                 aria-label="Outfit view selection"
               >
@@ -280,6 +331,26 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                   >
                     {view.charAt(0).toUpperCase() + view.slice(1)}
                   </button>
+                ))}
+              </div>
+
+              {/* View indicator dots (Feature #34) */}
+              <div
+                className="flex items-center justify-center gap-3 mb-4"
+                role="presentation"
+                aria-hidden="true"
+              >
+                {(['now', 'today', 'tomorrow'] as const).map((view) => (
+                  <div
+                    key={view}
+                    className={`
+                      h-1.5 rounded-full transition-all duration-300 ease-out
+                      ${activeView === view
+                        ? 'w-8 bg-blue-500'
+                        : 'w-2 bg-gray-300'
+                      }
+                    `}
+                  />
                 ))}
               </div>
 

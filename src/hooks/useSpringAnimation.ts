@@ -114,6 +114,13 @@ export function useSpringAnimation(initialValue: number = 0): SpringAnimationRes
 
   // Start animation to target value
   const animateTo = useCallback((target: number, config?: SpringConfig) => {
+    // Prevent animation overlap - Feature #77
+    // If already animating, stop the current animation first
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current)
+      rafIdRef.current = null
+    }
+
     targetValueRef.current = target
 
     // Update config if provided
@@ -125,11 +132,9 @@ export function useSpringAnimation(initialValue: number = 0): SpringAnimationRes
       }
     }
 
-    // Start animation if not already running
-    if (!isAnimatingRef.current) {
-      isAnimatingRef.current = true
-      animateLoop()
-    }
+    // Start animation (will always start since we cancelled previous raf)
+    isAnimatingRef.current = true
+    animateLoop()
   }, [animateLoop])
 
   // Stop animation

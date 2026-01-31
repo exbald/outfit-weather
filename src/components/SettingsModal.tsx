@@ -14,7 +14,7 @@ interface SettingsModalProps {
  * Focus trap hook for modals
  * Prevents keyboard focus from leaving the modal dialog
  */
-function useFocusTrap(isActive: boolean, containerRef: React.RefObject<HTMLDivElement>) {
+function useFocusTrap(isActive: boolean, containerRef: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     if (!isActive || !containerRef.current) return
 

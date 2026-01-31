@@ -19,3 +19,12 @@
 8:25:06 PM [vite] (client) page reload test-feature-67-aria-settings.html
 8:25:10 PM [vite] vite.config.ts changed, restarting server...
 8:25:10 PM [vite] server restarted.
+8:26:06 PM [vite] vite.config.ts changed, restarting server...
+8:26:06 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
+8:26:06 PM [vite] server restarted.
+8:27:02 PM [vite] (client) hmr update /src/components/SettingsModal.tsx, /src/styles/index.css
+8:27:14 PM [vite] (client) hmr update /src/components/Drawer.tsx, /src/styles/index.css
+8:27:22 PM [vite] (client) hmr update /src/components/Drawer.tsx, /src/styles/index.css
+8:27:37 PM [vite] (client) hmr update /src/components/Drawer.tsx, /src/styles/index.css
+8:27:54 PM [vite] (client) hmr update /src/components/Drawer.tsx, /src/styles/index.css
+8:28:03 PM [vite] (client) hmr update /src/components/Drawer.tsx, /src/styles/index.css

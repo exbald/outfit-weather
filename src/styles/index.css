@@ -21,6 +21,31 @@ body {
   min-height: 100vh;
 }
 
+/* Feature #70: Visible focus indicators for keyboard navigation */
+/* High contrast focus ring for keyboard users */
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Ensure buttons have visible focus */
+button:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Input elements */
+input:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Remove default outline but keep focus-visible for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* PWA Install Button Animation */
 @keyframes slide-in {
   from {
