@@ -213,9 +213,14 @@ export function getOutfitEmojisString(bucket: TemperatureBucket): string {
 }
 
 /**
+ * Wind speed unit type
+ */
+export type WindSpeedUnit = 'kmh' | 'mph' | 'ms' | 'kn'
+
+/**
  * Weather modifier types for outfit adjustments
  */
-export type WeatherModifier = 'rain' | 'snow' | 'none'
+export type WeatherModifier = 'rain' | 'snow' | 'wind' | 'none'
 
 /**
  * Check if a weather code indicates rain conditions
@@ -283,18 +288,95 @@ export function isSnowWeather(weatherCode: number): boolean {
 }
 
 /**
- * Get weather modifier type from weather code
+ * Wind speed threshold for recommending windbreaker (km/h)
+ * Values above this are considered "windy"
+ */
+const WIND_THRESHOLD_KMH = 15
+
+/**
+ * Wind speed threshold for recommending windbreaker (mph)
+ * Values above this are considered "windy"
+ */
+const WIND_THRESHOLD_MPH = 9.3
+
+/**
+ * Convert wind speed from km/h to mph
+ */
+export function kmhToMph(kmh: number): number {
+  return kmh * 0.621371
+}
+
+/**
+ * Convert wind speed from mph to km/h
+ */
+export function mphToKmh(mph: number): number {
+  return mph / 0.621371
+}
+
+/**
+ * Check if wind speed is considered "windy"
+ *
+ * @param windSpeed - Wind speed value
+ * @param unit - Wind speed unit ('kmh', 'mph', 'ms', 'kn')
+ * @returns true if wind speed exceeds threshold
+ *
+ * @example
+ * ```ts
+ * isWindy(20, 'kmh') // true (above 15 km/h)
+ * isWindy(8, 'mph') // false (below 9.3 mph)
+ * isWindy(5, 'ms') // true (5 m/s = 18 km/h)
+ * ```
+ */
+export function isWindy(
+  windSpeed: number,
+  unit: WindSpeedUnit = 'kmh'
+): boolean {
+  // Convert to km/h for consistent threshold check
+  let windSpeedKmh: number
+
+  switch (unit) {
+    case 'kmh':
+      windSpeedKmh = windSpeed
+      break
+    case 'mph':
+      windSpeedKmh = mphToKmh(windSpeed)
+      break
+    case 'ms':
+      // m/s to km/h: multiply by 3.6
+      windSpeedKmh = windSpeed * 3.6
+      break
+    case 'kn':
+      // knots to km/h: multiply by 1.852
+      windSpeedKmh = windSpeed * 1.852
+      break
+  }
+
+  return windSpeedKmh >= WIND_THRESHOLD_KMH
+}
+
+/**
+ * Get weather modifier type from weather code and wind speed
  *
  * @param weatherCode - Open-Meteo weather code
+ * @param windSpeed - Wind speed value
+ * @param windSpeedUnit - Wind speed unit ('kmh', 'mph', 'ms', 'kn')
  * @returns Weather modifier type
  */
-export function getWeatherModifier(weatherCode: number): WeatherModifier {
+export function getWeatherModifier(
+  weatherCode: number,
+  windSpeed = 0,
+  windSpeedUnit: WindSpeedUnit = 'kmh'
+): WeatherModifier {
   if (isRainWeather(weatherCode)) {
     return 'rain'
   }
 
   if (isSnowWeather(weatherCode)) {
     return 'snow'
+  }
+
+  if (isWindy(windSpeed, windSpeedUnit)) {
+    return 'wind'
   }
 
   return 'none'

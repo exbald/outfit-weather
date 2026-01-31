@@ -310,3 +310,92 @@ Feature #11 remains fully functional with no regressions detected.
   - Unit conversions tested (C/F, kmh/mph)
   - Error handling validated
   - No regressions detected
+
+## Session Date: 2025-01-31 (Continued)
+
+## Feature Completed: #21 - Weather Code Modifiers (Rain/Snow)
+
+### What Was Accomplished:
+
+1. **Created Weather Modifier Detection System** (`src/lib/outfitLogic.ts`)
+   - `isRainWeather()` function - Detects 16 rain weather codes
+   - `isSnowWeather()` function - Detects 6 snow weather codes
+   - `getWeatherModifier()` function - Returns modifier type (rain/snow/none)
+   - `getOutfitWithWeather()` function - Combines base outfit with weather modifiers
+
+2. **Weather Code Coverage:**
+
+   **Rain Codes (16 total):**
+   - Drizzle: 51, 53, 55, 56, 57 (including freezing drizzle)
+   - Rain: 61, 63, 65 (slight, moderate, heavy)
+   - Freezing rain: 66, 67
+   - Rain showers: 80, 81, 82
+   - Thunderstorm: 95, 96, 99 (with/without hail)
+
+   **Snow Codes (6 total):**
+   - Snow: 71, 73, 75 (slight, moderate, heavy)
+   - Snow grains: 77
+   - Snow showers: 85, 86 (slight, heavy)
+
+3. **Weather Modifier Emojis:**
+   - Rain: Adds ☂️ (umbrella)
+   - Snow: Adds 🧣 (extra scarf) and 🧤 (gloves)
+   - Clear: No additional items
+
+4. **Test Component** (`src/components/WeatherModifierTest.tsx`)
+   - Interactive tester for temperature bucket + weather code combinations
+   - Visual grid showing all rain codes with detection status
+   - Visual grid showing all snow codes with detection status
+   - Outfit comparison for clear/rain/snow weather across all buckets
+   - Real-time preview of outfit with modifiers applied
+
+5. **Verification:**
+   - ✅ All 6 temperature buckets work with weather modifiers
+   - ✅ Rain detection works for all 16 rain codes
+   - ✅ Snow detection works for all 6 snow codes
+   - ✅ Outfit modification correctly adds weather-specific gear
+   - ✅ TypeScript compilation passes (no errors)
+   - ✅ Production build succeeds
+   - ✅ No mock data patterns
+   - ✅ No in-memory storage patterns
+
+### Code Quality:
+- ✅ No TypeScript errors
+- ✅ Build passes: `npm run build`
+- ✅ Function documentation with JSDoc comments
+- ✅ Type-safe interfaces and exports
+- ✅ Clear, self-documenting code
+- ✅ Immutable arrays (spread operator used)
+
+### Feature Steps Completed:
+1. ✅ Check weather condition - `getWeatherModifier()` implemented
+2. ✅ Add rain gear emojis if raining - Umbrella (☂️) added for rain
+3. ✅ Add snow gear emojis if snowing - Extra scarf (🧣) and gloves (🧤) added for snow
+
+### Feature Status: ✅ PASSING
+
+Feature #21 has been marked as passing.
+
+---
+
+## Current Project Status:
+- Total Features: 79
+- Passing: 10 (Features #4, #5, #11, #13, #17, #19, #20, #21, #27, #28)
+- In Progress: 2
+- Completion: 12.7%
+- Dev Server: Running on http://localhost:5174
+
+## Next Steps:
+Continue with the next pending feature in the Outfit Logic category.
+
+## Files Modified This Session:
+- `src/lib/outfitLogic.ts` (updated) - Added weather modifier functions
+- `src/components/WeatherModifierTest.tsx` (created) - Test component for weather modifiers
+- `src/App.tsx` (updated) - Added test component to dev UI
+- `FEATURE_21_VERIFICATION.md` (created) - Comprehensive verification document
+
+## Technical Notes:
+- Weather modifiers are applied AFTER base temperature outfit is determined
+- Rain takes precedence over snow for mixed precipitation conditions
+- All modifier emojis are appended to the base outfit array
+- The system is extensible - easy to add new modifier types (wind, UV, etc.)

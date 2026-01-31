@@ -10,11 +10,25 @@ interface WeatherDisplayProps {
 }
 
 /**
+ * Format cache age into human-readable string
+ * @param seconds - Age in seconds
+ * @returns Formatted string (e.g., "Updated just now", "Updated 5 mins ago")
+ */
+function formatCacheAge(seconds: number): string {
+  if (seconds <= 0) return 'Updated just now'
+  if (seconds < 60) return 'Updated just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `Updated ${minutes} min${minutes > 1 ? 's' : ''} ago`
+  const hours = Math.floor(minutes / 60)
+  return `Updated ${hours} hour${hours > 1 ? 's' : ''} ago`
+}
+
+/**
  * WeatherDisplay component
  * Shows current weather information including temperature, condition, and location
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
-  const { weather, loading, error, retry } = useWeather(lat, lon)
+  const { weather, loading, error, cacheAge, retry } = useWeather(lat, lon)
 
   if (loading) {
     return (
@@ -109,6 +123,11 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
           <p className="text-xs text-gray-400">{weather.location.timezone}</p>
         </div>
       )}
+
+      {/* Cache age timestamp */}
+      <div className="text-center">
+        <p className="text-xs text-gray-400">{formatCacheAge(cacheAge)}</p>
+      </div>
     </div>
   )
 }
