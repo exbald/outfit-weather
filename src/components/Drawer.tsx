@@ -3,6 +3,24 @@ import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { getFallbackOutfit, type OutfitRecommendation } from '../hooks/useOutfit'
 import { useSettings } from '../hooks/useSettings'
 
+/**
+ * Drawer component for outfit recommendations
+ * Shows a collapsed peek/handle at bottom of screen, expands on interaction
+ * Supports swipe-up gesture to expand, swipe-down/click to collapse
+ *
+ * Features:
+ * - Swipe-up gesture to expand drawer (Feature #28)
+ * - Tap outside drawer (backdrop) to close (Feature #30)
+ * - Swipe-down gesture or tap handle to collapse
+ * - Keyboard accessible (Escape key to close, Enter/Space to toggle)
+ *
+ * Accessibility:
+ * - Drawer uses fixed white background (frosted glass effect)
+ * - Text colors optimized for white background
+ * - WCAG AA compliant contrast ratios
+ * - Modal behavior when expanded (backdrop + aria-modal)
+ */
+
 interface DrawerProps {
   /** All outfit recommendations for switching between views */
   outfits?: {
@@ -51,6 +69,23 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
 
   // Get fallback outfit when current outfit is null (Feature #52)
   const displayOutfit = currentOutfit ?? getFallbackOutfit(activeView)
+
+  // Handle Escape key to close drawer (accessibility enhancement)
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (isExpanded && e.key === 'Escape') {
+        collapseDrawer()
+      }
+    }
+
+    if (isExpanded) {
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isExpanded])
 
   const touchStartY = useRef<number>(0)
   const touchStartTime = useRef<number>(0)
@@ -143,7 +178,17 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
       className="fixed bottom-0 left-0 right-0 z-40"
       aria-label="Outfit recommendations drawer"
     >
-      <div className="max-w-md mx-auto">
+      {/* Backdrop overlay - closes drawer when tapped (Feature #30) */}
+      {isExpanded && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm cursor-pointer"
+          onClick={collapseDrawer}
+          aria-hidden="true"
+          data-testid="drawer-backdrop"
+        />
+      )}
+
+      <div className="max-w-md mx-auto relative">
         {/* Collapsed state - drawer handle bar */}
         <div
           ref={drawerRef}

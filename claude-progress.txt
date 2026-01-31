@@ -4748,3 +4748,193 @@ Feature #45 was already implemented. This session verified the implementation an
 - Message: "feat: verify Feature #45 - Temperature unit toggle (C/F)"
 
 ---
+## Session Date: 2025-01-31
+
+## Feature Completed: #45 - Temperature Unit Toggle (C/F)
+
+### What Was Accomplished:
+
+Feature #45 was **already implemented** in a previous session. This session verified the implementation.
+
+### Implementation Verified:
+
+1. **Settings Hook** (`src/hooks/useSettings.ts`)
+   - Manages temperature and wind speed unit state
+   - Auto-detects locale defaults (US → °F/mph, others → °C/kmh)
+   - Persists to localStorage with key `outfitweather_settings`
+
+2. **Unit Conversion Functions** (`src/lib/unitConversion.ts`)
+   - `celsiusToFahrenheit()` - Converts °C to °F
+   - `fahrenheitToCelsius()` - Converts °F to °C
+   - `convertTemperature()` - Converts based on target unit
+   - `formatTemperature()` - Formats with degree symbol (e.g., "72°")
+   - `kmhToMmph()` - Converts km/h to mph
+   - `formatWindSpeed()` - Formats with unit label (e.g., "15 km/h")
+
+3. **Settings Context** (`src/contexts/SettingsContext.tsx`)
+   - React context for global settings access
+   - `SettingsProvider` wraps app in main.tsx
+   - `useSettingsContext()` hook for components
+
+4. **Settings Modal** (`src/components/SettingsModal.tsx`)
+   - Receives unit values as props from Layout
+   - Toggle buttons for °C/°F and km/h/mph
+   - Visual feedback: Blue (selected) vs gray (unselected)
+
+5. **Weather Display** (`src/components/WeatherDisplay.tsx`)
+   - Uses `formatTemperature(temp, temperatureUnit)`
+   - Uses `formatWindSpeed(speed, windSpeedUnit)`
+   - Both main temp and "feels like" temp are converted
+
+### Tests Created:
+1. `test-feature-45-verification.test.ts` - Unit tests for conversion functions
+2. `test-feature-45-temp-unit.html` - Browser-based test page
+3. `test-feature-45-manual.js` - Console test script
+
+### Test Results:
+- ✅ 11/11 conversion function tests passing
+- ✅ TypeScript compilation successful
+- ✅ Production build successful
+
+### Feature Requirements:
+- ✅ Create toggle component - SettingsModal with °C/°F buttons
+- ✅ Track unit preference - localStorage persistence with locale detection
+- ✅ Convert temperatures based on setting - formatTemperature() used in WeatherDisplay
+
+### Feature Status: ✅ PASSING (Already Implemented)
+
+Feature #45 was already implemented. This session verified the implementation and created test documentation.
+
+---
+
+==============================================================================
+SESSION SUMMARY - Feature #63: Tomorrow View Uses Forecast
+==============================================================================
+ASSIGNED FEATURE: #63 - Tomorrow view uses forecast
+STATUS: ✓ PASSED (Already Implemented)
+
+IMPLEMENTATION SUMMARY:
+-----------------------
+Feature #63 was already fully implemented. The Tomorrow view correctly shows
+predicted temperatures and outfit recommendations using daily forecast data.
+
+DATA FLOW:
+----------
+1. Open-Meteo API: Fetches daily forecast (today + tomorrow + ...)
+   - daily.temperature_2m_max[1] = tomorrow's high
+   - daily.temperature_2m_min[1] = tomorrow's low
+   - daily.weathercode[1] = tomorrow's conditions
+   - daily.uv_index_max[1] = tomorrow's UV
+
+2. parseDailyForecast(): Extracts tomorrow as index 1 from daily arrays
+
+3. useWeather(): Returns weather.daily.tomorrow object
+
+4. useOutfit(): Creates tomorrowOutfit using:
+   - temperature = weather.daily.tomorrow.temperatureMax (for outfit logic)
+   - weatherCode = weather.daily.tomorrow.weatherCode (for rain/snow/etc)
+   - uvIndex = weather.daily.tomorrow.uvIndexMax (for sun protection)
+   - highTemp = weather.daily.tomorrow.temperatureMax (for display)
+   - lowTemp = weather.daily.tomorrow.temperatureMin (for display)
+
+5. Drawer Component: Displays tomorrow view when selected
+   - Shows outfit emojis
+   - Shows one-liner
+   - Shows "High: X° · Low: Y°" (Feature #61)
+
+VERIFICATION RESULTS:
+---------------------
+✓ Extract tomorrow's forecast (index 1 from daily arrays)
+✓ Show predicted high/low temperatures
+✓ Display tomorrow's outfit based on forecast
+✓ Use tomorrow's temperature for outfit logic
+✓ Use tomorrow's weather code for outfit modifiers
+✓ Use tomorrow's UV index for sun protection
+✓ Display high/low temps in UI
+✓ Handle missing data gracefully (Feature #52)
+
+TEST COVERAGE:
+--------------
+✓ 10/10 unit tests passing (test-feature-63-tomorrow-view.test.ts)
+✓ Manual verification script (verify-feature-63.ts)
+✓ TypeScript compilation: SUCCESS
+✓ Production build: SUCCESS
+✓ No mock data patterns found
+
+REAL-WORLD EXAMPLES:
+--------------------
+Cold Tomorrow (5°C/-2°C, Snow):
+  - Outfit: 🧥🧣🧤🥾❄️
+  - One-liner: "Bundle up! ❄️"
+  - Display: "High: 5° · Low: -2°"
+
+Hot Tomorrow (32°C/22°C, Clear, UV 9):
+  - Outfit: 👕🩳👟🕶️🧢
+  - One-liner: "Hot day! Stay cool! ☀️"
+  - Display: "High: 32° · Low: 22°"
+
+Rainy Tomorrow (14°C/11°C, Rain, 90% precip):
+  - Outfit: 🧥👖🥾☂️
+  - One-liner: "Rain expected - umbrella time! ☔"
+  - Display: "High: 14° · Low: 11°"
+
+FILES CREATED:
+--------------
+- test-feature-63-tomorrow-view.test.ts (10 tests, all passing)
+- verify-feature-63.ts (Manual verification script)
+- FEATURE-63-VERIFICATION.md (Comprehensive documentation)
+
+FILES INVOLVED:
+---------------
+- src/lib/openmeteo.ts (parseDailyForecast function)
+- src/hooks/useWeather.ts (Weather data management)
+- src/hooks/useOutfit.ts (Outfit generation for all views)
+- src/components/Drawer.tsx (UI display with view tabs)
+
+DEPENDENCIES:
+-------------
+- Feature #12: Daily forecast fetched (prerequisite)
+- Feature #26: Now view outfit displays (pattern)
+- Feature #61: High/low temp display (Tomorrow inherits)
+
+COMPLETION STATUS: 59/79 features passing (74.7%)
+
+Feature #63 has been marked as passing.
+
+==============================================================================
+
+====================================
+Session: Feature #61 - 2026-01-31
+====================================
+
+FEATURE #61: Today view uses daily forecast
+Status: ✅ PASSING
+
+Implementation:
+- Extended OutfitRecommendation interface with highTemp and lowTemp fields
+- Updated useOutfit hook to pass daily forecast high/low temps to recommendations
+- Added high/low temperature display in Drawer component for Today/Tomorrow views
+- Display format: "High: 78°F · Low: 65°F" with user's temperature unit
+- Conservative outfit logic: uses min(maxTemp, currentTemp) for Today view
+
+Files Modified:
+- src/hooks/useOutfit.ts
+- src/components/Drawer.tsx
+
+Files Created:
+- FEATURE-61-IMPLEMENTATION.md
+- src/lib/__tests__/test-feature-61-today-view.test.ts
+- claude-session-feature-61.md
+
+Build: ✅ TypeScript compilation successful, ✅ Production build successful
+
+Project Progress:
+- Total Features: 79
+- Passing: 60 (was 59)
+- In Progress: 4
+- Completion: 75.9%
+
+Dependencies Met:
+- ✅ Feature #12: Fetch daily forecast data
+- ✅ Feature #26: Now view outfit displays
+
