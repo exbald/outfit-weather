@@ -149,3 +149,102 @@ Continue with the next pending feature in the Outfit Logic category.
 - Feature #20 verified the existing implementation works correctly
 - All 6 temperature buckets have appropriate emoji combinations
 - Standard Unicode emojis ensure compatibility across devices
+
+## Session Date: 2025-01-31 (Continued)
+
+## Feature Completed: #28 - Swipe-up Gesture Expands Drawer
+
+### What Was Accomplished:
+
+1. **Implemented Touch Gesture Recognition** (`src/components/Drawer.tsx`)
+   - Added touch event listeners (onTouchStart, onTouchMove, onTouchEnd)
+   - Track swipe distance and velocity with thresholds
+   - Direction-specific behavior: swipe-up to expand, swipe-down to collapse
+   - Visual drag feedback with transform during gesture
+
+2. **Gesture Recognition Logic:**
+   - **Distance Threshold:** 50px minimum to trigger expand/collapse
+   - **Velocity Threshold:** 0.5 px/ms (fast swipes work at shorter distances)
+   - **Maximum Drag Offset:** 300px (prevents drawer from being dragged off-screen)
+   - Direction checks prevent incorrect behavior (can't expand by swiping down)
+
+3. **Visual Feedback:**
+   - Real-time `transform: translateY()` during drag for smooth visual feedback
+   - Drag offset updates immediately as user swipes
+   - Drawer springs back if threshold not met
+   - Smooth CSS transition for final expand/collapse animation
+
+4. **Testing:**
+   - ✅ Created comprehensive test suite (test-swipe-gestures.js)
+   - ✅ All 9 gesture logic tests pass
+   - ✅ All 6 drag offset tests pass
+   - ✅ TypeScript compilation passes
+   - ✅ Production build successful (bundle: 210.88 kB)
+   - ✅ Click and keyboard interaction preserved (accessibility)
+
+### Code Quality:
+- ✅ No TypeScript errors
+- ✅ Proper event handler typing (TouchEvent<HTMLDivElement>)
+- ✅ Refs properly typed (useRef<number>, useRef<HTMLDivElement>)
+- ✅ Well-documented constants with comments
+- ✅ Build passes: `npm run build`
+- ✅ No accessibility regressions (aria-label updates, keyboard still works)
+
+### Feature Status: ✅ PASSING
+
+Feature #28 has been marked as passing.
+
+**Verification Steps Completed:**
+1. ✅ Add touch event listeners
+2. ✅ Track swipe distance and velocity
+3. ✅ Expand drawer on upward swipe
+4. ✅ Collapse drawer on downward swipe (when expanded)
+5. ✅ Visual feedback during drag
+6. ✅ Distance threshold (50px) works
+7. ✅ Velocity threshold (0.5 px/ms) works
+8. ✅ Direction-specific behavior verified
+9. ✅ Click/keyboard still work
+
+---
+
+## Current Project Status:
+- Total Features: 79
+- Passing: 7 (Features #4, #5, #11, #13, #19, #20, #27, #28)
+- Completion: 10.1%
+- Dev Server: Running on http://localhost:5174
+
+## Files Modified This Session:
+- `src/components/Drawer.tsx` - Added touch gesture handling
+- `FEATURE_28_VERIFICATION.md` (created) - Comprehensive verification documentation
+- `test-swipe-gestures.js` (created) - Gesture logic test suite
+
+## Next Steps:
+Continue with the next pending feature in the Drawer category.
+
+## Regression Test: Feature #11 - API Client Fetches Current Weather
+**Date:** 2026-01-31 18:52:07 UTC
+
+### Test Results: ✅ PASSING - No Regression
+
+All verification steps completed successfully:
+- ✅ Build Open-Meteo API URL (buildCurrentWeatherUrl)
+- ✅ Fetch current weather endpoint (fetchCurrentWeather)
+- ✅ Parse temperature and weather code
+
+Live API test successful:
+- San Francisco weather fetched: 13.5°C, 4.7 km/h, code 3 (overcast)
+- Unit conversions tested: Celsius/Fahrenheit, km/h/mph
+- Error handling tested: Invalid coordinates return proper error
+
+Code quality checks:
+- TypeScript compilation passes
+- All type definitions correct
+- Error handling robust
+
+Feature #11 remains fully functional with no regressions detected.
+[Testing] 2026-01-31 18:52:18 UTC - Feature #11 regression test complete: PASSING ✅
+  - All 3 verification steps tested and confirmed working
+  - Live API test successful (San Francisco: 13.5°C, code 3)
+  - Unit conversions tested (C/F, kmh/mph)
+  - Error handling validated
+  - No regressions detected
