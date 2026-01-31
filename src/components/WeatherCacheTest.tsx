@@ -30,6 +30,7 @@ export function WeatherCacheTest() {
     // Test 1: Save weather data
     const testData = {
       temperature: 22.5,
+      apparentTemperature: 21.8,
       weatherCode: 0,
       condition: 'Clear sky',
       icon: '☀️',
@@ -128,6 +129,7 @@ export function WeatherCacheTest() {
     try {
       const complexData = {
         temperature: -15.7,
+        apparentTemperature: -24.3,
         weatherCode: 71,
         condition: 'Slight snow',
         icon: '🌨️',

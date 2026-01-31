@@ -3721,3 +3721,58 @@ Feature #23 has been marked as passing.
 ---
 
 
+
+## Session: Feature #51 - API failure uses cached data
+
+**Date:** 2026-01-31
+**Status:** ✅ PASSING
+**Feature ID:** 51
+
+### Summary
+Feature #51 verifies that when the weather API returns an error, the app falls back to cached data and displays a "using cached data" message to the user.
+
+### Implementation
+
+The implementation was already present in the codebase (likely part of Feature #48). This session verified and documented the behavior.
+
+**Key Changes:**
+1. **Conditional Error Display:** Error screen only shows when no cached data exists
+2. **Offline Indicator Banner:** Orange banner shows when using cached data due to API error
+3. **User-Friendly Messaging:** "Using cached data" + error details
+
+**Code Locations:**
+- `src/components/WeatherDisplay.tsx` lines 73-96, 104-124
+- `src/hooks/useWeather.ts` lines 128-144 (fallback logic)
+
+### Test Steps Verification
+
+1. ✅ **Catch API error responses** - `src/lib/openmeteo.ts` throws `WeatherApiError`
+2. ✅ **Fall back to cache** - `useWeather` hook loads cached data and sets `offline: true`
+3. ✅ **Show 'using cached data' message** - Orange banner displays with error details
+
+### User Experience
+
+- **With cache:** Shows weather data + orange "Using cached data" banner
+- **Without cache:** Shows error screen with retry button
+- **Recovery:** Retry button or auto-refresh restores fresh data
+
+### Files Created
+
+- `src/lib/__tests__/test-feature-51-api-error-cached-data.test.ts` - Test suite
+- `FEATURE-51-VERIFICATION.md` - Detailed verification docs
+- `claude-session-feature-51.md` - Session summary
+
+### Build Status
+
+✅ TypeScript compilation successful
+✅ Build successful
+✅ No errors introduced
+
+### Dependencies
+
+- Feature #16: API error handling with retry ✅
+- Feature #48: Network failure fallback to cached data ✅
+
+Both complete and verified.
+
+---

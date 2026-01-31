@@ -485,6 +485,7 @@ function App() {
             <WeatherDisplay
               lat={positionForDisplay.latitude}
               lon={positionForDisplay.longitude}
+              locationName={locationName ?? undefined}
             />
 
             {/* Test components for development */}
