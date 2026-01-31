@@ -55,8 +55,8 @@ describe('Feature #56: Dark Mode System Preference', () => {
       expect(getBackgroundColor(20, weatherCode, isDay, 'F', true)).toBe('#1e293b') // freezing
       expect(getBackgroundColor(40, weatherCode, isDay, 'F', true)).toBe('#1e3a5f') // cold
       expect(getBackgroundColor(55, weatherCode, isDay, 'F', true)).toBe('#334155') // cool
-      expect(getBackgroundColor(70, weatherCode, isDay, 'F', true)).toBe('#1c3d32') // mild
-      expect(getBackgroundColor(80, weatherCode, isDay, 'F', true)).toBe('#423d18') // warm
+      expect(getBackgroundColor(68, weatherCode, isDay, 'F', true)).toBe('#1c3d32') // mild (65-70°F)
+      expect(getBackgroundColor(75, weatherCode, isDay, 'F', true)).toBe('#423d18') // warm (70-80°F)
       expect(getBackgroundColor(95, weatherCode, isDay, 'F', true)).toBe('#4a2c0a') // hot
     })
 
@@ -68,13 +68,13 @@ describe('Feature #56: Dark Mode System Preference', () => {
       expect(getBackgroundColor(20, weatherCode, isDay, 'F', false)).toBe('#e0e7ef') // freezing
       expect(getBackgroundColor(40, weatherCode, isDay, 'F', false)).toBe('#dbeafe') // cold
       expect(getBackgroundColor(55, weatherCode, isDay, 'F', false)).toBe('#f1f5f9') // cool
-      expect(getBackgroundColor(70, weatherCode, isDay, 'F', false)).toBe('#ecfdf5') // mild
-      expect(getBackgroundColor(80, weatherCode, isDay, 'F', false)).toBe('#fef3c7') // warm
+      expect(getBackgroundColor(68, weatherCode, isDay, 'F', false)).toBe('#ecfdf5') // mild (65-70°F)
+      expect(getBackgroundColor(75, weatherCode, isDay, 'F', false)).toBe('#fef3c7') // warm (70-80°F)
       expect(getBackgroundColor(95, weatherCode, isDay, 'F', false)).toBe('#ffedd5') // hot
     })
 
     it('should apply dark mode to rain colors', () => {
-      const temp = 70 // mild
+      const temp = 68 // mild
       const weatherCode = 63 // rain
       const isDay = 1 // daytime
 
@@ -98,7 +98,7 @@ describe('Feature #56: Dark Mode System Preference', () => {
     })
 
     it('should preserve night mode behavior when system is light mode', () => {
-      const temp = 70 // mild
+      const temp = 68 // mild (65-70°F)
       const weatherCode = 0 // clear sky
       const isDay = 0 // nighttime
 
@@ -109,7 +109,7 @@ describe('Feature #56: Dark Mode System Preference', () => {
     })
 
     it('system dark mode should override day flag', () => {
-      const temp = 70 // mild
+      const temp = 68 // mild (65-70°F)
       const weatherCode = 0 // clear sky
       const isDay = 1 // daytime (but system dark mode enabled)
 
@@ -125,7 +125,7 @@ describe('Feature #56: Dark Mode System Preference', () => {
       // Dark mode backgrounds should have light text
       const freezingDark = getBackgroundColor(20, 0, 1, 'F', true)
       const coldDark = getBackgroundColor(40, 0, 1, 'F', true)
-      const mildDark = getBackgroundColor(70, 0, 1, 'F', true)
+      const mildDark = getBackgroundColor(68, 0, 1, 'F', true) // mild (65-70°F)
       const hotDark = getBackgroundColor(95, 0, 1, 'F', true)
 
       // All dark colors start with #1-#4
@@ -139,7 +139,7 @@ describe('Feature #56: Dark Mode System Preference', () => {
       // Light mode backgrounds should have dark text
       const freezingLight = getBackgroundColor(20, 0, 1, 'F', false)
       const coldLight = getBackgroundColor(40, 0, 1, 'F', false)
-      const mildLight = getBackgroundColor(70, 0, 1, 'F', false)
+      const mildLight = getBackgroundColor(68, 0, 1, 'F', false) // mild (65-70°F)
       const hotLight = getBackgroundColor(95, 0, 1, 'F', false)
 
       // All light colors start with #d-#f
