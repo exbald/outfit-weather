@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature #66 - ARIA Labels Browser Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 { color: #2563eb; }
+    .test-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .pass { color: #16a34a; font-weight: bold; }
+    .fail { color: #dc2626; font-weight: bold; }
+    .info { color: #2563eb; }
+    code {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .output {
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Feature #66: ARIA Labels on Drawer - Browser Test</h1>
+
+  <div class="test-section">
+    <h2>Test Instructions:</h2>
+    <ol>
+      <li>Open the OutFitWeather app at <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+      <li>Open your browser's DevTools (F12 or Cmd+Option+I)</li>
+      <li>Go to the Elements/Inspector tab</li>
+      <li>Find the drawer element (use the inspector to hover over elements)</li>
+      <li>Run the following JavaScript in the console to verify ARIA attributes</li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>JavaScript Console Tests:</h2>
+
+    <h3>Test 1: Find the drawer element</h3>
+    <p>Run this in the browser console:</p>
+    <div class="output">const drawer = document.querySelector('aside[aria-label="Outfit recommendations drawer"]');
+console.log('Drawer found:', drawer !== null);
+console.log('ARIA label:', drawer?.getAttribute('aria-label'));</div>
+
+    <h3>Test 2: Check collapsed state (drawer not expanded)</h3>
+    <div class="output">const drawerInner = document.querySelector('aside[aria-label="Outfit recommendations drawer"] > div > div');
+console.log('Role (collapsed):', drawerInner?.getAttribute('role'));
+console.log('ARIA expanded (collapsed):', drawerInner?.getAttribute('aria-expanded'));
+console.log('ARIA label (collapsed):', drawerInner?.getAttribute('aria-label'));</div>
+
+    <h3>Test 3: Click drawer to expand, then check attributes</h3>
+    <div class="output">// Click the drawer to expand it
+drawerInner?.click();
+
+// Wait a moment, then check attributes again
+setTimeout(() => {
+  console.log('Role (expanded):', drawerInner?.getAttribute('role'));
+  console.log('ARIA expanded (expanded):', drawerInner?.getAttribute('aria-expanded'));
+  console.log('ARIA modal (expanded):', drawerInner?.getAttribute('aria-modal'));
+  console.log('ARIA label (expanded):', drawerInner?.getAttribute('aria-label'));
+}, 100);</div>
+
+    <h3>Test 4: Check tab list ARIA</h3>
+    <div class="output">const tabList = document.querySelector('[role="tablist"]');
+console.log('Tab list found:', tabList !== null);
+console.log('Tab list ARIA label:', tabList?.getAttribute('aria-label'));</div>
+
+    <h3>Test 5: Check tab buttons</h3>
+    <div class="output">const tabs = document.querySelectorAll('[role="tab"]');
+tabs.forEach((tab, i) => {
+  console.log(`Tab ${i + 1}:`, tab.textContent.trim(), '| aria-selected:', tab.getAttribute('aria-selected'));
+});</div>
+
+    <h3>Test 6: Check tab panel</h3>
+    <div class="output">const tabPanel = document.querySelector('[role="tabpanel"]');
+console.log('Tab panel found:', tabPanel !== null);
+console.log('Tab panel aria-live:', tabPanel?.getAttribute('aria-live'));
+console.log('Tab panel aria-label:', tabPanel?.getAttribute('aria-label'));</div>
+
+    <h3>Test 7: Check emoji outfit ARIA</h3>
+    <div class="output">const emojiDisplay = document.querySelector('[role="img"]');
+console.log('Emoji display found:', emojiDisplay !== null);
+console.log('Emoji aria-label:', emojiDisplay?.getAttribute('aria-label'));</div>
+
+    <h3>Test 8: Test keyboard navigation</h3>
+    <div class="output">// Focus the drawer
+drawerInner?.focus();
+console.log('Drawer focused:', document.activeElement === drawerInner);
+
+// Press Enter to toggle
+const event = new KeyboardEvent('keypress', { key: 'Enter', bubbles: true });
+drawerInner?.dispatchEvent(event);
+console.log('Enter key dispatched - drawer should toggle');</div>
+  </div>
+
+  <div class="test-section">
+    <h2>Expected Results:</h2>
+    <ul>
+      <li><span class="pass">✓</span> Outer aside element has <code>aria-label="Outfit recommendations drawer"</code></li>
+      <li><span class="pass">✓</span> Collapsed: role="button", aria-expanded="false"</li>
+      <li><span class="pass">✓</span> Expanded: role="dialog", aria-expanded="true", aria-modal="true"</li>
+      <li><span class="pass">✓</span> Tab list has <code>role="tablist"</code> and <code>aria-label="Outfit view selection"</code></li>
+      <li><span class="pass">✓</span> Tab buttons have <code>role="tab"</code> and <code>aria-selected</code></li>
+      <li><span class="pass">✓</span> Tab panel has <code>role="tabpanel"</code> and <code>aria-live="polite"</code></li>
+      <li><span class="pass">✓</span> Emoji outfit has <code>role="img"</code> and <code>aria-label</code></li>
+      <li><span class="pass">✓</span> Keyboard navigation works (Enter/Space keys)</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>Screen Reader Testing:</h2>
+    <p>To test with a screen reader:</p>
+    <ol>
+      <li><strong>macOS:</strong> Enable VoiceOver (Cmd+F5)</li>
+      <li><strong>Windows:</strong> Enable Narrator (Win+Ctrl+Enter) or NVDA</li>
+      <li>Navigate to the drawer using Tab key</li>
+      <li>Listen to the announcements:</li>
+      <ul>
+        <li>Collapsed: "Open outfit recommendations, button"</li>
+        <li>Expanded: "Outfit recommendations dialog with navigation, dialog"</li>
+        <li>Tab list: "Outfit view selection, tab list, 3 items"</li>
+        <li>Tab panel: "Outfit for now, panel, [emojis], image"</li>
+      </ul>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>Accessibility Tree Inspection (Chrome DevTools):</h2>
+    <ol>
+      <li>Open DevTools</li>
+      <li>Go to the "Accessibility" pane (may need to enable via More Tools)</li>
+      <li>Select the drawer element in the Elements tab</li>
+      <li>View the Accessibility Tree to see:
+        <ul>
+          <li>Role: Button (collapsed) or Dialog (expanded)</li>
+          <li>Name: "Open outfit recommendations" or "Outfit recommendations dialog with navigation"</li>
+          <li>State: Expanded (true/false), Modal (true when expanded)</li>
+        </ul>
+      </li>
+    </ol>
+  </div>
+</body>
+</html>

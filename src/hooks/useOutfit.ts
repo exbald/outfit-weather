@@ -21,6 +21,10 @@ export interface OutfitRecommendation {
   emojis: string
   oneLiner: string
   view: OutfitView
+  /** High temperature for the day (only for 'today' and 'tomorrow' views) */
+  highTemp?: number
+  /** Low temperature for the day (only for 'today' and 'tomorrow' views) */
+  lowTemp?: number
 }
 
 /**
@@ -67,7 +71,9 @@ export function useOutfit(weather: WeatherData | null) {
       windSpeed: number,
       uvIndex: number,
       isDay: number,
-      view: OutfitView
+      view: OutfitView,
+      highTemp?: number,
+      lowTemp?: number
     ): OutfitRecommendation => {
       // Determine temperature bucket
       const bucket = getTemperatureBucket(temperature, 'F')
@@ -94,7 +100,7 @@ export function useOutfit(weather: WeatherData | null) {
       // Generate friendly one-liner
       const oneLiner = generateOneLiner(bucket, modifier, uvCategory, isDay, weatherCode)
 
-      return { emojis, oneLiner, view }
+      return { emojis, oneLiner, view, highTemp, lowTemp }
     }
 
     // Now: Based on current conditions
@@ -116,7 +122,9 @@ export function useOutfit(weather: WeatherData | null) {
       weather.windSpeed,
       weather.daily.today.uvIndexMax,
       weather.isDay,
-      'today'
+      'today',
+      weather.daily.today.temperatureMax, // High temp for display
+      weather.daily.today.temperatureMin  // Low temp for display
     )
 
     // Tomorrow: Based on tomorrow's forecast
@@ -126,7 +134,9 @@ export function useOutfit(weather: WeatherData | null) {
       weather.windSpeed, // Use current wind as estimate
       weather.daily.tomorrow.uvIndexMax,
       weather.isDay,
-      'tomorrow'
+      'tomorrow',
+      weather.daily.tomorrow.temperatureMax, // High temp for display
+      weather.daily.tomorrow.temperatureMin  // Low temp for display
     )
 
     return {

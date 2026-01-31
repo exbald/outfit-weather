@@ -1,6 +1,7 @@
 import { useState, useRef, TouchEvent, useEffect } from 'react'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { getFallbackOutfit, type OutfitRecommendation } from '../hooks/useOutfit'
+import { useSettings } from '../hooks/useSettings'
 
 interface DrawerProps {
   /** All outfit recommendations for switching between views */
@@ -30,6 +31,9 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [activeView, setActiveView] = useState<'now' | 'today' | 'tomorrow'>('now')
+
+  // Get temperature unit setting
+  const { settings } = useSettings()
 
   // Get the current outfit based on active view
   const currentOutfit = outfits?.[activeView] ?? null
@@ -153,10 +157,11 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          role="button"
+          role={isExpanded ? "dialog" : "button"}
           tabIndex={0}
           aria-expanded={isExpanded}
-          aria-label={isExpanded ? "Close outfit recommendations" : "Open outfit recommendations"}
+          aria-modal={isExpanded ? "true" : undefined}
+          aria-label={isExpanded ? "Outfit recommendations dialog with navigation" : "Open outfit recommendations"}
           onKeyPress={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
@@ -236,6 +241,15 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
               <p className={`text-center text-xl font-medium ${textColors.primary} transition-all duration-300`}>
                 {displayOutfit.oneLiner}
               </p>
+
+              {/* High/Low temperature display for Today and Tomorrow views (Feature #61) */}
+              {(activeView === 'today' || activeView === 'tomorrow') && displayOutfit.highTemp !== undefined && displayOutfit.lowTemp !== undefined && (
+                <div className="text-center mt-3">
+                  <span className={`text-sm font-medium ${textColors.secondary}`}>
+                    High: {Math.round(displayOutfit.highTemp)}°{settings.temperatureUnit} · Low: {Math.round(displayOutfit.lowTemp)}°{settings.temperatureUnit}
+                  </span>
+                </div>
+              )}
 
               {/* Fallback indicator (only shown when using fallback) */}
               {!currentOutfit && (
