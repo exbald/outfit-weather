@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature #49 Test: No Cache + No Network Error</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; }
+    .test { margin: 1rem 0; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+    .pass { background: #d4edda; border-color: #c3e6cb; }
+    .fail { background: #f8d7da; border-color: #f5c6cb; }
+    pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Feature #49 Verification: No Cache + No Network Error</h1>
+  <div id="results"></div>
+
+  <script>
+    const results = document.getElementById('results');
+
+    function addTest(name, passed, details) {
+      const div = document.createElement('div');
+      div.className = `test ${passed ? 'pass' : 'fail'}`;
+      div.innerHTML = `
+        <strong>${passed ? '✓' : '✗'} ${name}</strong>
+        ${details ? `<pre>${details}</pre>` : ''}
+      `;
+      results.appendChild(div);
+    }
+
+    // Test 1: Verify useWeather hook structure
+    async function testUseWeatherHook() {
+      try {
+        const response = await fetch('/src/hooks/useWeather.ts');
+        const code = await response.text();
+
+        const checks = {
+          hasErrorState: code.includes('error: string | null'),
+          hasOfflineState: code.includes('offline: boolean'),
+          hasRetryFunction: code.includes('retry: () => void'),
+          hasErrorHandling: code.includes('catch (err)'),
+          checksCache: code.includes('const cached = loadWeatherData'),
+          setsErrorNoCache: code.includes('setError(errorMessage)') && code.includes('} else {'),
+        };
+
+        const allPassed = Object.values(checks).every(v => v);
+        addTest(
+          'useWeather hook has error handling structure',
+          allPassed,
+          JSON.stringify(checks, null, 2)
+        );
+      } catch (e) {
+        addTest('useWeather hook structure', false, e.message);
+      }
+    }
+
+    // Test 2: Verify WeatherDisplay error screen
+    async function testWeatherDisplayErrorScreen() {
+      try {
+        const response = await fetch('/src/components/WeatherDisplay.tsx');
+        const code = await response.text();
+
+        const checks = {
+          hasErrorCondition: code.includes('if (error'),
+          showsWarningEmoji: code.includes('⚠️'),
+          hasRetryButton: code.includes('onClick={retry}'),
+          hasFriendlyMessage: code.includes("Couldn't fetch weather"),
+          hasAccessibility: code.includes('role="alert"'),
+        };
+
+        const allPassed = Object.values(checks).every(v => v);
+        addTest(
+          'WeatherDisplay has error screen',
+          allPassed,
+          JSON.stringify(checks, null, 2)
+        );
+      } catch (e) {
+        addTest('WeatherDisplay error screen', false, e.message);
+      }
+    }
+
+    // Test 3: Verify error screen only shows when no weather data
+    async function testErrorScreenCondition() {
+      try {
+        const response = await fetch('/src/components/WeatherDisplay.tsx');
+        const code = await response.text();
+
+        // Look for the specific condition
+        const hasCorrectCondition = code.includes('if (error && !weather)');
+
+        addTest(
+          'Error screen only shows when error + no weather data',
+          hasCorrectCondition,
+          hasCorrectCondition
+            ? 'Found: if (error && !weather)'
+            : 'Missing correct condition check'
+        );
+      } catch (e) {
+        addTest('Error screen condition', false, e.message);
+      }
+    }
+
+    // Test 4: Verify WeatherApiError class
+    async function testWeatherApiError() {
+      try {
+        const response = await fetch('/src/lib/openmeteo.ts');
+        const code = await response.text();
+
+        const checks = {
+          hasErrorClass: code.includes('class WeatherApiError'),
+          hasUserMessage: code.includes('userMessage'),
+          hasIsRetryable: code.includes('isRetryable'),
+          hasErrorMapping: code.includes('getErrorMessageForStatus'),
+        };
+
+        const allPassed = Object.values(checks).every(v => v);
+        addTest(
+          'WeatherApiError has user-friendly messages',
+          allPassed,
+          JSON.stringify(checks, null, 2)
+        );
+      } catch (e) {
+        addTest('WeatherApiError class', false, e.message);
+      }
+    }
+
+    // Test 5: Verify three-state error handling
+    async function testThreeStateHandling() {
+      try {
+        const response = await fetch('/src/hooks/useWeather.ts');
+        const code = await response.text();
+
+        // Check that all three states are handled:
+        // 1. Success: weather data, no error
+        // 2. Offline: cached weather data, error for reference, offline=true
+        // 3. No cache: no weather data, error shown, offline=false
+
+        const checks = {
+          hasOfflineState: code.includes('setOffline(true)'),
+          hasOnlineState: code.includes('setOffline(false)'),
+          cachesWeatherOnSuccess: code.includes('setWeather(cached)'),
+          showsErrorWhenNoCache: code.includes('} else {') && code.includes('setError(errorMessage)'),
+        };
+
+        const allPassed = Object.values(checks).every(v => v);
+        addTest(
+          'Three-state error handling (success/offline/error)',
+          allPassed,
+          JSON.stringify(checks, null, 2)
+        );
+      } catch (e) {
+        addTest('Three-state handling', false, e.message);
+      }
+    }
+
+    // Run all tests
+    (async () => {
+      await testUseWeatherHook();
+      await testWeatherDisplayErrorScreen();
+      await testErrorScreenCondition();
+      await testWeatherApiError();
+      await testThreeStateHandling();
+
+      // Summary
+      const passed = document.querySelectorAll('.pass').length;
+      const total = document.querySelectorAll('.test').length;
+
+      const summary = document.createElement('div');
+      summary.className = `test ${passed === total ? 'pass' : 'fail'}`;
+      summary.innerHTML = `<strong>Summary: ${passed}/${total} tests passed</strong>`;
+      results.appendChild(summary);
+    })();
+  </script>
+</body>
+</html>
