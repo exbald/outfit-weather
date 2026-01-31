@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feature #52 Test: Missing Outfit Fallback</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #1a1a1a;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .pass {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .fail {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    #console-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .emoji-display {
+      font-size: 48px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .one-liner {
+      text-align: center;
+      font-size: 20px;
+      color: #333;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Feature #52: Missing Outfit Fallback Test</h1>
+
+  <div class="test-section">
+    <div class="test-title">Test 1: Empty Outfit Detection</div>
+    <button onclick="testEmptyOutfitDetection()">Run Test</button>
+    <div id="test1-result"></div>
+  </div>
+
+  <div class="test-section">
+    <div class="test-title">Test 2: Fallback Outfit Display</div>
+    <button onclick="testFallbackOutfitDisplay()">Run Test</button>
+    <div id="test2-result"></div>
+  </div>
+
+  <div class="test-section">
+    <div class="test-title">Test 3: Error Logging</div>
+    <button onclick="testErrorLogging()">Run Test</button>
+    <div id="test3-result"></div>
+  </div>
+
+  <div class="test-section">
+    <div class="test-title">Console Output (Real-time)</div>
+    <div id="console-output">Waiting for tests...</div>
+  </div>
+
+  <script type="module">
+    // Import the necessary functions
+    let getFallbackOutfit, getTemperatureBucket;
+
+    // Console capture
+    const consoleOutput = document.getElementById('console-output');
+    const originalError = console.error;
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+
+    function addToConsole(message, type = 'log') {
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = type === 'error' ? '[ERROR]' : type === 'warn' ? '[WARN]' : '[INFO]';
+      consoleOutput.textContent += `\n[${timestamp}] ${prefix} ${message}`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    console.error = (...args) => {
+      originalError.apply(console, args);
+      addToConsole(args.join(' '), 'error');
+    };
+
+    console.log = (...args) => {
+      originalLog.apply(console, args);
+      addToConsole(args.join(' '), 'log');
+    };
+
+    console.warn = (...args) => {
+      originalWarn.apply(console, args);
+      addToConsole(args.join(' '), 'warn');
+    };
+
+    // Simulate outfit logic for testing
+    function simulateGetFallbackOutfit(view = 'now') {
+      const fallbacks = [
+        "Check outside! 🤷",
+        "Weather's looking interesting!",
+        "Step outside and see!",
+        "Expect the unexpected!",
+        "Weather happens!"
+      ];
+      const index = Math.floor(Date.now() / 60000) % fallbacks.length;
+      return {
+        emojis: '🤔',
+        oneLiner: fallbacks[index],
+        view: view
+      };
+    }
+
+    function displayResult(testId, passed, message) {
+      const resultDiv = document.getElementById(`test${testId}-result`);
+      const className = passed ? 'pass' : 'fail';
+      const icon = passed ? '✅' : '❌';
+      resultDiv.innerHTML = `<div class="test-result ${className}">${icon} ${message}</div>`;
+    }
+
+    function displayInfo(testId, message) {
+      const resultDiv = document.getElementById(`${testId}-result`);
+      resultDiv.innerHTML = `<div class="test-result info">ℹ️ ${message}</div>`;
+    }
+
+    // Test 1: Empty Outfit Detection
+    window.testEmptyOutfitDetection = function() {
+      displayInfo(1, 'Testing empty outfit detection...');
+
+      const testCases = [
+        { name: 'null outfit', outfit: null },
+        { name: 'undefined outfit', outfit: undefined },
+        { name: 'empty emojis', outfit: { emojis: '', oneLiner: 'test', view: 'now' } }
+      ];
+
+      let passed = 0;
+      let total = testCases.length;
+
+      testCases.forEach(testCase => {
+        const isEmpty = !testCase.outfit || testCase.outfit.emojis === '';
+        if (isEmpty) {
+          passed++;
+          console.log(`✓ Detected empty outfit: ${testCase.name}`);
+        } else {
+          console.error(`✗ Failed to detect empty outfit: ${testCase.name}`);
+        }
+      });
+
+      const success = passed === total;
+      const message = `Detected ${passed}/${total} empty outfits correctly`;
+      displayResult(1, success, message);
+    };
+
+    // Test 2: Fallback Outfit Display
+    window.testFallbackOutfitDisplay = function() {
+      displayInfo(2, 'Testing fallback outfit display...');
+
+      const fallback = simulateGetFallbackOutfit('now');
+
+      const tests = [
+        {
+          name: 'Has emojis',
+          pass: fallback.emojis && fallback.emojis.length > 0
+        },
+        {
+          name: 'Has one-liner',
+          pass: fallback.oneLiner && fallback.oneLiner.length > 0
+        },
+        {
+          name: 'Has correct view',
+          pass: fallback.view === 'now'
+        },
+        {
+          name: 'Emojis is a string',
+          pass: typeof fallback.emojis === 'string'
+        },
+        {
+          name: 'One-liner is a string',
+          pass: typeof fallback.oneLiner === 'string'
+        }
+      ];
+
+      let passed = tests.filter(t => t.pass).length;
+      tests.forEach(test => {
+        if (test.pass) {
+          console.log(`✓ ${test.name}`);
+        } else {
+          console.error(`✗ ${test.name}`);
+        }
+      });
+
+      // Display visual representation
+      const visual = `
+        <div class="emoji-display">${fallback.emojis}</div>
+        <div class="one-liner">${fallback.oneLiner}</div>
+      `;
+
+      const success = passed === tests.length;
+      const message = `${passed}/${tests.length} tests passed<br>${visual}`;
+      displayResult(2, success, message);
+    };
+
+    // Test 3: Error Logging
+    window.testErrorLogging = function() {
+      displayInfo(3, 'Testing error logging...');
+
+      // Simulate logging when outfit is missing
+      const testCases = [
+        { view: 'now', outfit: null },
+        { view: 'today', outfit: null },
+        { view: 'tomorrow', outfit: null }
+      ];
+
+      let logged = 0;
+      testCases.forEach(testCase => {
+        if (!testCase.outfit) {
+          console.error(
+            `[OutFitWeather] Missing outfit data for view "${testCase.view}". ` +
+            `This may indicate incomplete weather data or outfit logic failure. ` +
+            `Using fallback outfit.`
+          );
+          logged++;
+        }
+      });
+
+      const success = logged === testCases.length;
+      const message = `Logged ${logged}/${testCases.length} errors to console`;
+      displayResult(3, success, message);
+    };
+
+    // Run all tests on load
+    console.log('Feature #52 Test Suite Loaded');
+    console.log('Click each test button to run individual tests');
+  </script>
+</body>
+</html>

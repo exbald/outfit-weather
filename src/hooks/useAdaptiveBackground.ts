@@ -23,11 +23,12 @@ export interface AdaptiveBackgroundResult {
  * @param weatherCode - Open-Meteo weather code
  * @param isDay - Day flag (1 = day, 0 = night)
  * @param unit - Temperature unit ('C' or 'F')
+ * @param isSystemDarkMode - System dark mode preference (from prefers-color-scheme)
  * @returns Background color, gradient, and CSS style object
  *
  * @example
  * ```tsx
- * const { backgroundStyle } = useAdaptiveBackground(72, 0, 1, 'F')
+ * const { backgroundStyle } = useAdaptiveBackground(72, 0, 1, 'F', false)
  *
  * return <div style={backgroundStyle}>...</div>
  * ```
@@ -36,7 +37,8 @@ export function useAdaptiveBackground(
   temperature: number | null,
   weatherCode: number | null,
   isDay: number | null,
-  unit: 'C' | 'F' = 'F'
+  unit: 'C' | 'F' = 'F',
+  isSystemDarkMode: boolean = false
 ): AdaptiveBackgroundResult {
   // Default fallback color (cool gray)
   const defaultColor = '#f1f5f9'
@@ -46,8 +48,8 @@ export function useAdaptiveBackground(
       return defaultColor
     }
 
-    return getBackgroundColor(temperature, weatherCode, isDay, unit)
-  }, [temperature, weatherCode, isDay, unit])
+    return getBackgroundColor(temperature, weatherCode, isDay, unit, isSystemDarkMode)
+  }, [temperature, weatherCode, isDay, unit, isSystemDarkMode])
 
   const backgroundGradient = useMemo(() => {
     return getBackgroundGradient(backgroundColor)

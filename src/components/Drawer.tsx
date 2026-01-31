@@ -1,12 +1,13 @@
-import { useState, useRef, TouchEvent } from 'react'
+import { useState, useRef, TouchEvent, useEffect } from 'react'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
+import { getFallbackOutfit, type OutfitRecommendation } from '../hooks/useOutfit'
 
 interface DrawerProps {
-  /** Outfit recommendation to display when drawer is expanded */
-  outfit?: {
-    emojis: string
-    oneLiner: string
-    view: 'now' | 'today' | 'tomorrow'
+  /** All outfit recommendations for switching between views */
+  outfits?: {
+    now: OutfitRecommendation | null
+    today: OutfitRecommendation | null
+    tomorrow: OutfitRecommendation | null
   }
   /** Weather data for adaptive text colors on drawer (white background always) */
   temperature?: number
@@ -24,10 +25,28 @@ interface DrawerProps {
  * - Text colors optimized for white background
  * - WCAG AA compliant contrast ratios
  */
-export function Drawer({ outfit, temperature, weatherCode, isDay }: DrawerProps) {
+export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
+  const [activeView, setActiveView] = useState<'now' | 'today' | 'tomorrow'>('now')
+
+  // Get the current outfit based on active view
+  const currentOutfit = outfits?.[activeView] ?? null
+
+  // Log error when outfit is missing (Feature #52)
+  useEffect(() => {
+    if (isExpanded && !currentOutfit) {
+      console.error(
+        `[OutFitWeather] Missing outfit data for view "${activeView}". ` +
+        `This may indicate incomplete weather data or outfit logic failure. ` +
+        `Using fallback outfit.`
+      )
+    }
+  }, [isExpanded, currentOutfit, activeView])
+
+  // Get fallback outfit when current outfit is null (Feature #52)
+  const displayOutfit = currentOutfit ?? getFallbackOutfit(activeView)
 
   const touchStartY = useRef<number>(0)
   const touchStartTime = useRef<number>(0)
@@ -161,7 +180,7 @@ export function Drawer({ outfit, temperature, weatherCode, isDay }: DrawerProps)
           )}
 
           {/* Expanded state content */}
-          {isExpanded && outfit && (
+          {isExpanded && (
             <div className="p-6">
               {/* Handle indicator for closing */}
               <div
@@ -169,48 +188,65 @@ export function Drawer({ outfit, temperature, weatherCode, isDay }: DrawerProps)
                 aria-hidden="true"
               />
 
-              {/* View indicator */}
-              <div className="text-center mb-2">
-                <span className="inline-block px-3 py-1 bg-black/5 rounded-full text-sm font-medium text-gray-700 uppercase tracking-wide">
-                  {outfit.view}
-                </span>
+              {/* Navigation tabs/pills */}
+              <div
+                className="flex items-center justify-center gap-2 mb-4"
+                role="tablist"
+                aria-label="Outfit view selection"
+              >
+                {(['now', 'today', 'tomorrow'] as const).map((view) => (
+                  <button
+                    key={view}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeView === view}
+                    aria-controls="outfit-panel"
+                    onClick={() => setActiveView(view)}
+                    className={`
+                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                      ${activeView === view
+                        ? 'bg-blue-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }
+                    `}
+                  >
+                    {view.charAt(0).toUpperCase() + view.slice(1)}
+                  </button>
+                ))}
               </div>
 
               {/* Large emoji outfit display */}
-              <div className="text-center mb-3">
+              <div
+                id="outfit-panel"
+                role="tabpanel"
+                aria-live="polite"
+                aria-label={`Outfit for ${activeView}`}
+                className="text-center mb-3"
+              >
                 <div
-                  className="text-6xl leading-none"
+                  className="text-6xl leading-none transition-all duration-300"
                   role="img"
-                  aria-label={`Outfit: ${outfit.emojis}`}
+                  aria-label={`Outfit: ${displayOutfit.emojis}`}
                 >
-                  {outfit.emojis}
+                  {displayOutfit.emojis}
                 </div>
               </div>
 
               {/* Friendly one-liner text */}
-              <p className={`text-center text-xl font-medium ${textColors.primary}`}>
-                {outfit.oneLiner}
+              <p className={`text-center text-xl font-medium ${textColors.primary} transition-all duration-300`}>
+                {displayOutfit.oneLiner}
               </p>
+
+              {/* Fallback indicator (only shown when using fallback) */}
+              {!currentOutfit && (
+                <p className={`text-center text-xs mt-2 ${textColors.tertiary} italic`}>
+                  Couldn't determine outfit recommendation
+                </p>
+              )}
 
               {/* Navigation hint */}
               <p className={`text-center text-sm mt-4 ${textColors.secondary}`}>
                 Tap or swipe down to close
-              </p>
-            </div>
-          )}
-
-          {/* Expanded state without outfit data (fallback) */}
-          {isExpanded && !outfit && (
-            <div className="p-6 text-center">
-              <div
-                className="w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"
-                aria-hidden="true"
-              />
-              <p className={textColors.secondary}>
-                Check outside! 🤷
-              </p>
-              <p className={`text-sm mt-2 ${textColors.tertiary}`}>
-                Couldn't determine outfit
               </p>
             </div>
           )}

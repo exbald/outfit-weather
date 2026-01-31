@@ -6,7 +6,11 @@ import type { OutfitRecommendation } from '../hooks/useOutfit'
 
 interface LayoutProps {
   children: ReactNode
-  outfit?: OutfitRecommendation
+  outfits?: {
+    now: OutfitRecommendation | null
+    today: OutfitRecommendation | null
+    tomorrow: OutfitRecommendation | null
+  }
   temperature?: number
   weatherCode?: number
   isDay?: number
@@ -16,7 +20,7 @@ interface LayoutProps {
  * Main layout component for OutFitWeather app
  * Provides semantic HTML structure with header, main content area, and drawer
  */
-export function Layout({ children, outfit, temperature, weatherCode, isDay }: LayoutProps) {
+export function Layout({ children, outfits, temperature, weatherCode, isDay }: LayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   return (
@@ -65,7 +69,7 @@ export function Layout({ children, outfit, temperature, weatherCode, isDay }: La
 
       {/* Drawer component - for outfit recommendations */}
       <Drawer
-        outfit={outfit}
+        outfits={outfits}
         temperature={temperature}
         weatherCode={weatherCode}
         isDay={isDay}

@@ -16,6 +16,7 @@ import { useWeather } from './hooks/useWeather'
 import { useOutfit } from './hooks/useOutfit'
 import { usePwaInstall } from './hooks/usePwaInstall'
 import { useLocationName } from './hooks/useLocationName'
+import { useDarkMode } from './hooks/useDarkMode'
 
 /**
  * Location permission prompt screen component
@@ -291,6 +292,7 @@ function ManualLocationEntry({
 function App() {
   const { position, error: locationError, loading: locationLoading, requestLocation, permissionShown, grantPermission } = useGeolocation()
   const { isInstallable, promptInstall } = usePwaInstall()
+  const { isDarkMode } = useDarkMode() // Feature #56: Detect system dark mode preference
   // Manual location entry state
   const [manualLocation, setManualLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [showManualEntry, setShowManualEntry] = useState(false)
@@ -321,7 +323,7 @@ function App() {
   )
 
   // Generate outfit recommendations based on weather
-  const { getCurrentOutfit } = useOutfit(bgWeather)
+  const { outfits } = useOutfit(bgWeather)
 
   // Update background weather data when available
   if (bgWeather && !weatherForBackground) {
@@ -336,14 +338,18 @@ function App() {
   const { backgroundStyle } = useAdaptiveBackground(
     weatherForBackground?.temperature ?? null,
     weatherForBackground?.weatherCode ?? null,
-    weatherForBackground?.isDay ?? null
+    weatherForBackground?.isDay ?? null,
+    'F',
+    isDarkMode // Feature #56: Pass system dark mode preference
   )
 
   // Compute adaptive text colors for WCAG AA compliance
   const { classes: textColors } = useAdaptiveTextColors(
     weatherForBackground?.temperature ?? null,
     weatherForBackground?.weatherCode ?? null,
-    weatherForBackground?.isDay ?? null
+    weatherForBackground?.isDay ?? null,
+    'F',
+    isDarkMode // Feature #56: Pass system dark mode preference
   )
 
   // Show manual location entry form
@@ -471,11 +477,10 @@ function App() {
   // If we have position (GPS or manual), show weather
   const positionForDisplay = position || manualLocation
   if (positionForDisplay) {
-    const currentOutfit = getCurrentOutfit()
     return (
       <div style={backgroundStyle}>
         <Layout
-          outfit={currentOutfit ?? undefined}
+          outfits={outfits}
           temperature={bgWeather?.temperature}
           weatherCode={bgWeather?.weatherCode}
           isDay={bgWeather?.isDay}

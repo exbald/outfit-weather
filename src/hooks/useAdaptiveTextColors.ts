@@ -31,11 +31,12 @@ export interface AdaptiveTextClasses {
  * @param weatherCode - Open-Meteo weather code
  * @param isDay - Day flag (1 = day, 0 = night)
  * @param unit - Temperature unit ('C' or 'F')
+ * @param isSystemDarkMode - System dark mode preference (from prefers-color-scheme)
  * @returns Object with color values and Tailwind class names
  *
  * @example
  * ```tsx
- * const { colors, classes } = useAdaptiveTextColors(72, 0, 1, 'F')
+ * const { colors, classes } = useAdaptiveTextColors(72, 0, 1, 'F', false)
  *
  * return (
  *   <h1 className={classes.primary}>{title}</h1>
@@ -48,15 +49,16 @@ export function useAdaptiveTextColors(
   temperature: number | null,
   weatherCode: number | null,
   isDay: number | null,
-  unit: 'C' | 'F' = 'F'
+  unit: 'C' | 'F' = 'F',
+  isSystemDarkMode: boolean = false
 ): { colors: AdaptiveTextColors; classes: AdaptiveTextClasses } {
   // Get background color first
   const backgroundColor = useMemo(() => {
     if (temperature === null || weatherCode === null || isDay === null) {
       return '#f1f5f9' // Default cool light background
     }
-    return getBackgroundColor(temperature, weatherCode, isDay, unit)
-  }, [temperature, weatherCode, isDay, unit])
+    return getBackgroundColor(temperature, weatherCode, isDay, unit, isSystemDarkMode)
+  }, [temperature, weatherCode, isDay, unit, isSystemDarkMode])
 
   // Compute all text colors based on background
   const colors = useMemo<AdaptiveTextColors>(() => {

@@ -46,40 +46,49 @@ const RAIN_COLOR_DARK = '#374151' // Deep gray
  * @param weatherCode - Open-Meteo weather code
  * @param isDay - 1 for daytime, 0 for nighttime
  * @param unit - Temperature unit ('C' or 'F')
+ * @param useSystemDarkMode - If true, use dark mode colors (system preference override)
  * @returns CSS color string for background
  *
  * @example
  * ```ts
  * // Freezing day
- * getBackgroundColor(25, 'F', 1) // '#e0e7ef'
+ * getBackgroundColor(25, 63, 1, 'F', false) // '#e0e7ef'
  *
  * // Rainy day (overrides temperature color)
- * getBackgroundColor(70, 63, 1) // '#e2e8f0'
+ * getBackgroundColor(70, 63, 1, 'F', false) // '#e2e8f0'
  *
  * // Hot night
- * getBackgroundColor(85, 'F', 0) // '#4a2c0a'
+ * getBackgroundColor(85, 0, 0, 'F', false) // '#4a2c0a'
+ *
+ * // System dark mode override (daytime but system is dark mode)
+ * getBackgroundColor(70, 0, 1, 'F', true) // Uses dark colors
  * ```
  */
 export function getBackgroundColor(
   temperature: number,
   weatherCode: number,
   isDay: number,
-  unit: 'C' | 'F' = 'F'
+  unit: 'C' | 'F' = 'F',
+  useSystemDarkMode: boolean = false
 ): string {
+  // Determine if we should use dark colors
+  // System dark mode preference overrides the isDay flag
+  const useDarkColors = useSystemDarkMode || isDay === 0
+
   // Check for precipitation conditions first (highest priority)
   if (isRainWeather(weatherCode) || isSnowWeather(weatherCode)) {
-    return isDay === 1 ? RAIN_COLOR_LIGHT : RAIN_COLOR_DARK
+    return useDarkColors ? RAIN_COLOR_DARK : RAIN_COLOR_LIGHT
   }
 
   // Get temperature bucket
   const bucket = getTemperatureBucket(temperature, unit)
 
-  // Return appropriate color based on day/night
-  if (isDay === 1) {
-    return LIGHT_MODE_COLORS[bucket]
+  // Return appropriate color based on dark/light mode
+  if (useDarkColors) {
+    return DARK_MODE_COLORS[bucket]
   }
 
-  return DARK_MODE_COLORS[bucket]
+  return LIGHT_MODE_COLORS[bucket]
 }
 
 /**
