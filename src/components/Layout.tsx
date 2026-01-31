@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { Drawer } from './Drawer'
 
 interface LayoutProps {
   children: ReactNode
@@ -52,25 +53,8 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </main>
 
-      {/* Drawer component placeholder - for outfit recommendations */}
-      <aside
-        className="fixed bottom-0 left-0 right-0 z-40"
-        aria-label="Outfit recommendations drawer"
-      >
-        <div className="max-w-md mx-auto">
-          {/* Drawer handle bar */}
-          <div className="bg-white/80 backdrop-blur-md rounded-t-3xl shadow-lg border-t border-black/5">
-            <div className="flex flex-col items-center pt-2 pb-4 px-4">
-              {/* Handle indicator */}
-              <div className="w-12 h-1.5 bg-gray-400 rounded-full mb-2" aria-hidden="true" />
-              {/* Swipe hint */}
-              <p className="text-sm text-gray-500 font-medium">
-                Swipe up · What to wear
-              </p>
-            </div>
-          </div>
-        </div>
-      </aside>
+      {/* Drawer component - for outfit recommendations */}
+      <Drawer />
     </div>
   )
 }
