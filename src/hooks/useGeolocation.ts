@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export interface LocationPosition {
   latitude: number
@@ -18,6 +18,8 @@ export interface UseGeolocationResult {
   loading: boolean
   requestLocation: () => void
   clearError: () => void
+  permissionShown: boolean
+  grantPermission: () => void
 }
 
 /**
@@ -67,6 +69,16 @@ export function useGeolocation(): UseGeolocationResult {
   const [position, setPosition] = useState<LocationPosition | null>(null)
   const [error, setError] = useState<GeolocationError | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
+  const [permissionShown, setPermissionShown] = useState<boolean>(true) // Show permission prompt first
+
+  /**
+   * Grant permission to request location
+   * Called when user clicks "Allow" on the permission prompt
+   */
+  const grantPermission = () => {
+    setPermissionShown(false)
+    requestLocation()
+  }
 
   /**
    * Request the user's current location
@@ -137,16 +149,16 @@ export function useGeolocation(): UseGeolocationResult {
     setError(null)
   }
 
-  // Auto-request location on mount
-  useEffect(() => {
-    requestLocation()
-  }, [])
+  // Don't auto-request location on mount - wait for user to grant permission
+  // The permission screen will be shown first
 
   return {
     position,
     error,
     loading,
     requestLocation,
-    clearError
+    clearError,
+    permissionShown,
+    grantPermission
   }
 }

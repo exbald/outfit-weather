@@ -35,7 +35,25 @@ export function WeatherCacheTest() {
       icon: '☀️',
       windSpeed: 10.5,
       isDay: 1,
-      location: { latitude: 37.7749, longitude: -122.4194, timezone: 'America/Los_Angeles' }
+      location: { latitude: 37.7749, longitude: -122.4194, timezone: 'America/Los_Angeles' },
+      daily: {
+        today: {
+          time: '2026-01-31',
+          temperatureMax: 25.0,
+          temperatureMin: 18.0,
+          weatherCode: 0,
+          precipitationProbabilityMax: 0,
+          uvIndexMax: 5
+        },
+        tomorrow: {
+          time: '2026-02-01',
+          temperatureMax: 24.0,
+          temperatureMin: 17.0,
+          weatherCode: 1,
+          precipitationProbabilityMax: 10,
+          uvIndexMax: 4
+        }
+      }
     }
 
     try {
@@ -119,6 +137,24 @@ export function WeatherCacheTest() {
           latitude: 61.2181,
           longitude: -149.9003,
           timezone: 'America/Anchorage'
+        },
+        daily: {
+          today: {
+            time: '2026-01-31',
+            temperatureMax: -10.0,
+            temperatureMin: -20.0,
+            weatherCode: 71,
+            precipitationProbabilityMax: 80,
+            uvIndexMax: 1
+          },
+          tomorrow: {
+            time: '2026-02-01',
+            temperatureMax: -8.0,
+            temperatureMin: -18.0,
+            weatherCode: 65,
+            precipitationProbabilityMax: 70,
+            uvIndexMax: 1
+          }
         }
       }
 

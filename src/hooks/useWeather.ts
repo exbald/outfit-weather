@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchCurrentWeather, getWeatherCondition } from '../lib/openmeteo'
+import { fetchCurrentWeather, getWeatherCondition, parseDailyForecast, type DailyWeatherData } from '../lib/openmeteo'
 import {
   saveWeatherData,
   loadWeatherData,
@@ -18,6 +18,10 @@ export interface WeatherData {
     latitude: number
     longitude: number
     timezone: string
+  }
+  daily: {
+    today: DailyWeatherData
+    tomorrow: DailyWeatherData
   }
 }
 
@@ -83,6 +87,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     try {
       const data = await fetchCurrentWeather(latitude, longitude)
       const condition = getWeatherCondition(data.current.weathercode)
+      const dailyForecast = parseDailyForecast(data.daily)
 
       const weatherData: WeatherData = {
         temperature: data.current.temperature,
@@ -95,7 +100,8 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
           latitude: data.latitude,
           longitude: data.longitude,
           timezone: data.timezone
-        }
+        },
+        daily: dailyForecast
       }
 
       // Save to cache for offline access and faster loads

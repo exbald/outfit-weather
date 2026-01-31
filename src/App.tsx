@@ -12,7 +12,37 @@ import { useAdaptiveBackground } from './hooks/useAdaptiveBackground'
 import { useWeather } from './hooks/useWeather'
 
 /**
- * Location permission screen component
+ * Location permission prompt screen component
+ * Shown before requesting geolocation to explain why location is needed
+ */
+function LocationPermissionPrompt({ onAllow }: { onAllow: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
+      <div className="text-6xl">📍</div>
+      <div className="text-center max-w-md">
+        <h2 className="text-xl font-semibold text-gray-800 mb-3">
+          Enable Location Access
+        </h2>
+        <p className="text-gray-600 mb-2">
+          OutFitWeather needs your location to show accurate weather and outfit recommendations for your area.
+        </p>
+        <p className="text-sm text-gray-500 mb-6">
+          Your location is only used to fetch weather data and is never stored or shared.
+        </p>
+        <button
+          onClick={onAllow}
+          className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
+          type="button"
+        >
+          Allow Location Access
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Location permission denied screen component
  * Shown when user denies location access
  */
 function LocationPermissionDenied({ onRetry }: { onRetry: () => void }) {
@@ -59,7 +89,7 @@ function LocationLoading() {
 }
 
 function App() {
-  const { position, error: locationError, loading: locationLoading, requestLocation } = useGeolocation()
+  const { position, error: locationError, loading: locationLoading, requestLocation, permissionShown, grantPermission } = useGeolocation()
   const [weatherForBackground, setWeatherForBackground] = useState<{
     temperature: number
     weatherCode: number
@@ -87,6 +117,28 @@ function App() {
     weatherForBackground?.weatherCode ?? null,
     weatherForBackground?.isDay ?? null
   )
+
+  // Show permission prompt before requesting location
+  if (permissionShown) {
+    return (
+      <div style={backgroundStyle}>
+        <Layout>
+          <LocationPermissionPrompt onAllow={grantPermission} />
+          <div className="border-t border-gray-200 pt-8">
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+            <div className="space-y-8">
+              <ServiceWorkerTest />
+              <WeatherCacheTest />
+              <OutfitEmojiTest />
+              <WeatherCodeTest />
+              <WeatherModifierTest />
+              <WindModifierTest />
+            </div>
+          </div>
+        </Layout>
+      </div>
+    )
+  }
 
   // Handle location loading state
   if (locationLoading) {

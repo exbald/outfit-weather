@@ -96,6 +96,15 @@ export function getWeatherCondition(weatherCode: number): WeatherCondition {
   }
 }
 
+export interface DailyWeatherData {
+  time: string // ISO date string
+  temperatureMax: number
+  temperatureMin: number
+  weatherCode: number
+  precipitationProbabilityMax: number
+  uvIndexMax: number
+}
+
 export interface CurrentWeatherResponse {
   latitude: number
   longitude: number
@@ -120,10 +129,26 @@ export interface CurrentWeatherResponse {
     is_day: number
     weathercode: number
   }
+  daily_units: {
+    time: string
+    temperature_2m_max: string
+    temperature_2m_min: string
+    weathercode: string
+    precipitation_probability_max: string
+    uv_index_max: string
+  }
+  daily: {
+    time: string[]
+    temperature_2m_max: number[]
+    temperature_2m_min: number[]
+    weathercode: number[]
+    precipitation_probability_max: number[]
+    uv_index_max: number[]
+  }
 }
 
 /**
- * Build Open-Meteo API URL for fetching current weather
+ * Build Open-Meteo API URL for fetching current weather and daily forecast
  * @param lat - Latitude coordinate
  * @param lon - Longitude coordinate
  * @param temperatureUnit - Temperature unit (celsius or fahrenheit)
@@ -142,9 +167,10 @@ export function buildCurrentWeatherUrl(
     latitude: lat.toString(),
     longitude: lon.toString(),
     current: 'temperature,windspeed,is_day,weathercode',
+    daily: 'temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max,uv_index_max',
+    timezone: 'auto',
     temperature_unit: temperatureUnit,
-    wind_speed_unit: windSpeedUnit,
-    timezone: 'auto'
+    wind_speed_unit: windSpeedUnit
   })
 
   return `${baseUrl}?${params.toString()}`
@@ -186,5 +212,46 @@ export async function fetchCurrentWeather(
     throw new Error('Invalid API response: missing weather code')
   }
 
+  // Validate daily data exists
+  if (!data.daily || !Array.isArray(data.daily.time)) {
+    throw new Error('Invalid API response: missing daily forecast data')
+  }
+
   return data
+}
+
+/**
+ * Parse daily forecast data and extract today and tomorrow
+ * @param dailyData - Daily data array from Open-Meteo API
+ * @returns Object with today and tomorrow weather data
+ * @throws Error if daily data is invalid
+ */
+export function parseDailyForecast(dailyData: CurrentWeatherResponse['daily']): {
+  today: DailyWeatherData
+  tomorrow: DailyWeatherData
+} {
+  if (!dailyData.time || dailyData.time.length < 2) {
+    throw new Error('Invalid daily data: insufficient days')
+  }
+
+  // Extract today (index 0) and tomorrow (index 1)
+  const today: DailyWeatherData = {
+    time: dailyData.time[0],
+    temperatureMax: dailyData.temperature_2m_max[0],
+    temperatureMin: dailyData.temperature_2m_min[0],
+    weatherCode: dailyData.weathercode[0],
+    precipitationProbabilityMax: dailyData.precipitation_probability_max[0],
+    uvIndexMax: dailyData.uv_index_max[0]
+  }
+
+  const tomorrow: DailyWeatherData = {
+    time: dailyData.time[1],
+    temperatureMax: dailyData.temperature_2m_max[1],
+    temperatureMin: dailyData.temperature_2m_min[1],
+    weatherCode: dailyData.weathercode[1],
+    precipitationProbabilityMax: dailyData.precipitation_probability_max[1],
+    uvIndexMax: dailyData.uv_index_max[1]
+  }
+
+  return { today, tomorrow }
 }

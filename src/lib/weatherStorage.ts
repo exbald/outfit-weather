@@ -17,6 +17,24 @@ export interface CachedWeatherData {
       longitude: number
       timezone: string
     }
+    daily: {
+      today: {
+        time: string
+        temperatureMax: number
+        temperatureMin: number
+        weatherCode: number
+        precipitationProbabilityMax: number
+        uvIndexMax: number
+      }
+      tomorrow: {
+        time: string
+        temperatureMax: number
+        temperatureMin: number
+        weatherCode: number
+        precipitationProbabilityMax: number
+        uvIndexMax: number
+      }
+    }
   }
   /** Timestamp when data was fetched (Unix timestamp in milliseconds) */
   timestamp: number
