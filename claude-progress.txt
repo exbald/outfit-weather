@@ -4938,3 +4938,58 @@ Dependencies Met:
 - ✅ Feature #12: Fetch daily forecast data
 - ✅ Feature #26: Now view outfit displays
 
+
+## Session Date: 2025-01-31 (Continued)
+
+## Feature Completed: #29 - Swipe-down collapses drawer
+
+### What Was Accomplished:
+
+Feature #29 was **already fully implemented**. This session verified and documented the existing implementation.
+
+### Implementation Verified:
+
+#### 1. Handle Downward Swipe Gesture ✅
+- `src/components/Drawer.tsx` lines 112-139
+- `handleTouchEnd` checks `deltaY < 0` when `isExpanded === true`
+- Triggers `collapseDrawer()` when thresholds met
+
+#### 2. Collapse Drawer on Swipe Down ✅
+- `collapseDrawer()` function sets `isExpanded = false`
+- Returns drawer to peek/collapsed state
+
+#### 3. Reset to Peek Position ✅
+- Collapsed state shows handle bar + "Swipe up · What to wear" hint
+- Smooth 300ms transition animation
+
+### Swipe Thresholds:
+- Distance: 50px minimum
+- Velocity: 0.5 px/ms minimum
+- Either threshold triggers action (OR logic)
+
+### Verification Tests Passed:
+**7/7 tests passed** - `verify-feature-29.js`
+- ✅ Exact threshold (50px)
+- ✅ Above threshold (100px)
+- ✅ Fast swipe (velocity)
+- ✅ Slow short swipe (no action)
+- ✅ Wrong direction (no action)
+- ✅ Already collapsed (no action)
+- ✅ Very fast swipe
+
+### Files Created:
+1. `FEATURE-29-VERIFICATION.md` - Comprehensive code review
+2. `verify-feature-29.js` - Gesture logic tests
+3. `claude-session-feature-29.md` - Session summary
+
+### Feature Status: ✅ PASSING (Already Implemented)
+
+### Dependencies Verified:
+Feature #28 passing - Required for drawer to be expandable first
+
+## Updated Project Status:
+- Total Features: 79
+- Passing: 59 (was 58)
+- In Progress: 4
+- Completion: 74.7%
+
