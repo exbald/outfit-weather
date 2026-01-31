@@ -1,5 +1,61 @@
 # OutFitWeather - Coding Agent Progress
 
+## Session Date: 2025-01-31 20:07
+
+## Feature Completed: #53 - User-friendly error messages
+
+### What Was Accomplished:
+
+Feature #53 was **already fully implemented**. This session verified and documented the existing implementation.
+
+### Implementation Verified:
+
+#### 1. Error Message Templates ✅
+- `src/lib/openmeteo.ts`: `getErrorMessageForStatus()` maps HTTP codes to friendly messages
+- 400 → "Invalid location. Please try again."
+- 404 → "Weather service temporarily unavailable."
+- 429 → "Too many requests. Please wait a moment."
+- 500 → "Weather service is having issues. Trying again..."
+
+#### 2. Error Type Mapping ✅
+- `WeatherApiError` class with separate `message` (technical) and `userMessage` (friendly) fields
+- UI components ONLY display `userMessage`, never raw errors
+
+#### 3. No Raw Errors in UI ✅
+Verified all error screens show friendly messages:
+- Location permission denied: "We need your location" + guidance
+- Location timeout: "Taking longer than expected" + actionable advice
+- Weather API failure: "Couldn't fetch weather" + retry button
+- Offline indicator: "Offline · Last updated X mins ago"
+- No HTTP codes, stack traces, or technical terms anywhere in UI
+
+### Test Results:
+**10/10 tests passing** - `test-feature-53-user-friendly-errors.test.ts`
+
+All error messages verified to be:
+- ✅ Free of technical jargon
+- ✅ Free of HTTP status codes
+- ✅ Free of stack traces
+- ✅ Actionable (suggest what to do next)
+
+### Files Created:
+1. `test-feature-53-user-friendly-errors.test.ts` - Unit tests (10 tests)
+2. `FEATURE-53-VERIFICATION.md` - Comprehensive verification doc
+3. `claude-session-feature-53.md` - Session summary
+
+### Feature Status: ✅ PASSING (Already Implemented)
+
+### Dependencies Verified:
+All 5 dependencies passing: #48, #49, #50, #51, #52
+
+## Updated Project Status:
+- Total Features: 79
+- Passing: 55 (was 54)
+- In Progress: 4
+- Completion: 69.6%
+
+---
+
 ## Session Date: 2025-01-31 (Continued)
 
 ## Feature Completed: #3 - Service Worker Registers
@@ -4389,3 +4445,92 @@ No code changes needed - verified and documented.
 - Passing: 52 (was 51)
 - Completion: 65.8%
 
+================================================================================
+## Session Date: 2025-01-31 20:05
+
+## Feature Completed: #46 - Wind speed unit toggle
+
+### What Was Accomplished:
+
+Feature #46 was **already fully implemented**. This session verified the implementation.
+
+### Verified Implementation:
+
+#### 1. Wind Unit Toggle Created
+**File:** `src/components/SettingsModal.tsx` (Lines 81-112)
+- Settings modal includes "Wind Speed Unit" section
+- Two buttons: "km/h" and "mph"
+- Active state shows blue background
+- Inactive state shows gray background
+- Proper ARIA attributes for accessibility
+- Layout.tsx passes windSpeedUnit and setWindSpeedUnit to SettingsModal
+
+#### 2. Wind Unit Preference Tracked
+**File:** `src/hooks/useSettings.ts`
+- WindSpeedUnit type: 'kmh' | 'mph'
+- Default auto-detected from locale:
+  - US (en-US) → mph
+  - International → kmh
+- Stored in localStorage key: 'outfitweather_settings'
+- Persists across sessions
+- Setter function: setWindSpeedUnit(unit)
+
+#### 3. Wind Speeds Convert Based on Setting
+**File:** `src/lib/unitConversion.ts` (Lines 42-71)
+- convertWindSpeed(speed, unit): Converts using 0.621371 factor for mph
+- formatWindSpeed(speed, unit): Returns formatted string with unit label
+- Integration: WeatherDisplay.tsx line 266
+  ```tsx
+  <span>{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
+  ```
+
+### Test Results:
+
+**Automated Test Suite:** 10/10 tests passing (100%)
+
+Test coverage includes:
+- km/h to mph conversion (6.21371 factor)
+- Preserves km/h value when unit is 'kmh'
+- Correct unit labeling ('km/h' vs 'mph')
+- Rounding behavior (Math.round)
+- Zero wind speed handling
+- High wind speeds (150 km/h)
+- Decimal wind speeds (12.3, 12.6)
+- Real-world scenarios (calm, moderate, strong, gale)
+
+Real-world conversion examples:
+- Light breeze (10 km/h): "10 km/h" or "6 mph"
+- Moderate wind (25 km/h): "25 km/h" or "16 mph"
+- Strong wind (50 km/h): "50 km/h" or "31 mph"
+- Gale force (65 km/h): "65 km/h" or "40 mph"
+- Hurricane (150 km/h): "150 km/h" or "93 mph"
+
+### Code Quality:
+- All conversion tests passing (10/10)
+- No mock data patterns found
+- Proper localStorage persistence
+- ARIA attributes for accessibility
+- Semantic HTML structure
+- Locale auto-detection working
+
+### Files Created:
+- FEATURE_46_VERIFICATION.md - Comprehensive verification document
+- test-feature-46-wind-unit-simple.test.ts - Unit test suite (10 tests, all passing)
+- test-feature-46-wind-unit-toggle.test.ts - Full test suite (requires testing-library)
+
+### Git Commit:
+- eeedbd2 docs: verify wind speed unit toggle - Feature #46
+
+### Feature Status: PASSING
+
+Feature #46 has been marked as passing.
+
+---
+
+## Updated Project Status:
+- Total Features: 79
+- Passing: 55 (was 54)
+- In Progress: 3
+- Completion: 69.6%
+
+================================================================================

@@ -2,12 +2,14 @@
  * Temperature bucket types for outfit recommendations
  */
 export type TemperatureBucket =
+  | 'extreme_freezing'
   | 'freezing'
   | 'cold'
   | 'cool'
   | 'mild'
   | 'warm'
   | 'hot'
+  | 'extreme_hot'
 
 /**
  * Temperature unit type
@@ -18,12 +20,14 @@ export type TemperatureUnit = 'C' | 'F'
  * Temperature bucket boundaries in Fahrenheit
  */
 const FAHRENHEIT_BUCKETS = {
-  freezing: { max: 32 }, // < 32°F
+  extreme_freezing: { max: -20 }, // < -20°F (dangerously cold)
+  freezing: { min: -20, max: 32 }, // -20-32°F
   cold: { min: 32, max: 50 }, // 32-50°F
   cool: { min: 50, max: 65 }, // 50-65°F
   mild: { min: 65, max: 70 }, // 65-70°F (transition zone)
   warm: { min: 70, max: 80 }, // 70-80°F
-  hot: { min: 80 }, // > 80°F
+  hot: { min: 80, max: 110 }, // 80-110°F
+  extreme_hot: { min: 110 }, // > 110°F (dangerously hot)
 } as const
 
 /**
@@ -32,12 +36,14 @@ const FAHRENHEIT_BUCKETS = {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CELSIUS_BUCKETS = {
-  freezing: { max: 0 }, // < 0°C
+  extreme_freezing: { max: -29 }, // < -29°C (dangerously cold)
+  freezing: { min: -29, max: 0 }, // -29-0°C
   cold: { min: 0, max: 10 }, // 0-10°C
   cool: { min: 10, max: 18 }, // 10-18°C
   mild: { min: 18, max: 21 }, // 18-21°C (transition zone)
   warm: { min: 21, max: 27 }, // 21-27°C
-  hot: { min: 27 }, // > 27°C
+  hot: { min: 27, max: 43 }, // 27-43°C
+  extreme_hot: { min: 43 }, // > 43°C (dangerously hot)
 } as const
 
 // Export for documentation purposes
@@ -80,7 +86,14 @@ export function getTemperatureBucket(
 
   if (unit === 'C') {
     // Use Celsius boundaries directly
-    if (temperature < CELSIUS_BUCKETS.freezing.max - epsilon) {
+    if (temperature < CELSIUS_BUCKETS.extreme_freezing.max - epsilon) {
+      return 'extreme_freezing'
+    }
+
+    if (
+      temperature >= CELSIUS_BUCKETS.freezing.min - epsilon &&
+      temperature < CELSIUS_BUCKETS.freezing.max
+    ) {
       return 'freezing'
     }
 
@@ -112,11 +125,25 @@ export function getTemperatureBucket(
       return 'warm'
     }
 
-    return 'hot'
+    if (
+      temperature >= CELSIUS_BUCKETS.hot.min - epsilon &&
+      temperature < CELSIUS_BUCKETS.extreme_hot.min
+    ) {
+      return 'hot'
+    }
+
+    return 'extreme_hot'
   }
 
   // Fahrenheit logic
-  if (temperature < FAHRENHEIT_BUCKETS.freezing.max) {
+  if (temperature < FAHRENHEIT_BUCKETS.extreme_freezing.max) {
+    return 'extreme_freezing'
+  }
+
+  if (
+    temperature >= FAHRENHEIT_BUCKETS.freezing.min &&
+    temperature < FAHRENHEIT_BUCKETS.freezing.max
+  ) {
     return 'freezing'
   }
 
@@ -148,8 +175,15 @@ export function getTemperatureBucket(
     return 'warm'
   }
 
-  // temperature >= FAHRENHEIT_BUCKETS.hot.min
-  return 'hot'
+  if (
+    temperature >= FAHRENHEIT_BUCKETS.hot.min &&
+    temperature < FAHRENHEIT_BUCKETS.extreme_hot.min
+  ) {
+    return 'hot'
+  }
+
+  // temperature >= FAHRENHEIT_BUCKETS.extreme_hot.min
+  return 'extreme_hot'
 }
 
 /**
@@ -159,12 +193,14 @@ export function getTemperatureBucketDisplayName(
   bucket: TemperatureBucket
 ): string {
   const names: Record<TemperatureBucket, string> = {
+    extreme_freezing: 'Extreme Freezing',
     freezing: 'Freezing',
     cold: 'Cold',
     cool: 'Cool',
     mild: 'Mild',
     warm: 'Warm',
     hot: 'Hot',
+    extreme_hot: 'Extreme Heat',
   }
   return names[bucket]
 }
@@ -177,9 +213,13 @@ export function getTemperatureBucketDescription(
   unit: TemperatureUnit = 'F'
 ): string {
   const descriptions: Record<TemperatureBucket, { F: string; C: string }> = {
+    extreme_freezing: {
+      F: 'Below -20°F',
+      C: 'Below -29°C',
+    },
     freezing: {
-      F: 'Below 32°F',
-      C: 'Below 0°C',
+      F: '-20-32°F',
+      C: '-29-0°C',
     },
     cold: {
       F: '32-50°F',
@@ -198,8 +238,12 @@ export function getTemperatureBucketDescription(
       C: '21-27°C',
     },
     hot: {
-      F: 'Above 80°F',
-      C: 'Above 27°C',
+      F: '80-110°F',
+      C: '27-43°C',
+    },
+    extreme_hot: {
+      F: 'Above 110°F',
+      C: 'Above 43°C',
     },
   }
 
@@ -211,12 +255,14 @@ export function getTemperatureBucketDescription(
  * These are the default outfits before weather modifiers are applied
  */
 const BASE_OUTFITS: Record<TemperatureBucket, string[]> = {
+  extreme_freezing: ['🧥', '🧣', '🧤', '🥾', '🧢', '🧣', '🧤'], // Heavy coat, extra scarf/gloves/boots/hat for dangerously cold
   freezing: ['🧥', '🧣', '🧤', '🥾', '🧢'], // Heavy coat, scarf, gloves, boots, hat
   cold: ['🧥', '🧣', '👖', '🥾'], // Coat, scarf, pants, boots
   cool: ['🧥', '👕', '👖', '👟'], // Light coat, shirt, pants, sneakers
   mild: ['🧥', '👕', '👖', '👟'], // Light jacket, shirt, pants, sneakers
   warm: ['👕', '👖', '👟', '🧢'], // Shirt, pants, sneakers, hat
   hot: ['👕', '🩳', '👟', '🧢', '🕶️'], // T-shirt, shorts, sneakers, hat, sunglasses
+  extreme_hot: ['👕', '🩳', '👟', '🧢', '🕶️', '💧'], // Minimal clothing, hydration reminder for dangerously hot
 }
 
 /**

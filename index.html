@@ -11,6 +11,17 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>OutFitWeather</title>
+
+    <!-- Resource hints for faster loading on slow connections -->
+    <!-- Preconnect to external APIs -->
+    <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+    <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin>
+
+    <!-- DNS prefetch for geocoding API -->
+    <link rel="dns-prefetch" href="https://geocoding-api.open-meteo.com">
+
+    <!-- Preload critical resources -->
+    <link rel="modulepreload" href="/src/main.tsx">
   </head>
   <body>
     <div id="root"></div>

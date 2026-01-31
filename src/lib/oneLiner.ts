@@ -13,6 +13,36 @@ const ONE_LINER_TEMPLATES: Record<
     wind: string[]
   }
 > = {
+  extreme_freezing: {
+    default: [
+      "DANGEROUSLY COLD - Stay inside! ⚠️",
+      "Extreme cold - life-threatening temps! 🥶",
+      "Arctic blast - do not go outside! ❄️",
+      "Dangerously freezing - limit exposure!",
+      "Extreme cold warning - stay warm!"
+    ],
+    rain: [
+      "FREEZING RAIN - EXTREME DANGER! ⚠️🧊",
+      "Life-threatening ice storm - stay inside!",
+      "Dangerous freezing rain - avoid travel!",
+      "Extreme cold + ice = deadly!",
+      "Stay indoors - freezing rain!"
+    ],
+    snow: [
+      "Blizzard conditions - stay inside! ❄️⚠️",
+      "Extreme snow storm - dangerous!",
+      "Arctic blizzard - do not travel!",
+      "Heavy snow + extreme cold - deadly!",
+      "Stay home - extreme winter storm!"
+    ],
+    wind: [
+      "ARCTIC BLAST - Deadly wind chill! ⚠️",
+      "Extreme wind chill - stay inside!",
+      "Dangerous arctic winds - life-threatening!",
+      "Deadly wind chill - avoid exposure!",
+      "Extreme cold + wind = dangerous!"
+    ]
+  },
   freezing: {
     default: [
       "Bundle up! It's freezing out there! 🥶",
@@ -196,6 +226,37 @@ const ONE_LINER_TEMPLATES: Record<
       "Hot and windy - still warm!",
       "Blowing hot air - literally!",
       "Wind just adds heat!"
+    ]
+  },
+
+  extreme_hot: {
+    default: [
+      "EXTREME HEAT - Stay hydrated! ⚠️💧",
+      "Dangerous heat - limit outdoor activity! 🔥",
+      "Extreme heat warning - seek AC! ❄️",
+      "Life-threatening heat - stay cool!",
+      "Extreme temperatures - stay indoors!"
+    ],
+    rain: [
+      "EXTREME HEAT + Rain - Sauna day! 🌡️⚠️",
+      "Dangerous heat with rain - muggy!",
+      "Extreme heat plus rain - brutal!",
+      "Hot, wet, and dangerous!",
+      "Stay cool - extreme heat warning!"
+    ],
+    snow: [
+      "Extreme heat with snow? Impossible! 🤯",
+      "Weather going absolutely crazy!",
+      "What is happening? Extreme weather!",
+      "Cannot compute - physics broken!",
+      "Parallel universe weather!"
+    ],
+    wind: [
+      "EXTREME HEAT + Wind - Oven! 🔥🌬️⚠️",
+      "Dangerous heat + wind = blowtorch!",
+      "Extreme heat wind - deadly!",
+      "Like a furnace - stay inside!",
+      "Extreme convection oven weather!"
     ]
   }
 }

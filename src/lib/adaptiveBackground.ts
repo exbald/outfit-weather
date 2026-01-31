@@ -11,12 +11,14 @@ import { isRainWeather, isSnowWeather } from './outfitLogic'
  * These are the primary colors shown during the day
  */
 const LIGHT_MODE_COLORS: Record<TemperatureBucket, string> = {
+  extreme_freezing: '#c7d2dc', // Very pale slate - danger cold
   freezing: '#e0e7ef', // Slate blue
   cold: '#dbeafe', // Cool blue
   cool: '#f1f5f9', // Light gray-blue
   mild: '#ecfdf5', // Soft green
   warm: '#fef3c7', // Warm amber
   hot: '#ffedd5', // Orange
+  extreme_hot: '#fed7aa', // Deep orange - danger heat
 }
 
 /**
@@ -24,12 +26,14 @@ const LIGHT_MODE_COLORS: Record<TemperatureBucket, string> = {
  * Deeper variants with reduced lightness for night mode
  */
 const DARK_MODE_COLORS: Record<TemperatureBucket, string> = {
+  extreme_freezing: '#0f172a', // Very deep slate - danger cold
   freezing: '#1e293b', // Deep slate
   cold: '#1e3a5f', // Deep blue
   cool: '#334155', // Deep gray-blue
   mild: '#1c3d32', // Deep green
   warm: '#423d18', // Deep amber
   hot: '#4a2c0a', // Deep orange
+  extreme_hot: '#3d1a05', // Very deep orange - danger heat
 }
 
 /**

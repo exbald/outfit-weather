@@ -1,13 +1,22 @@
-import { useState } from 'react'
+import type { TemperatureUnit, WindSpeedUnit } from '../hooks/useSettings'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
+  temperatureUnit: TemperatureUnit
+  windSpeedUnit: WindSpeedUnit
+  setTemperatureUnit: (unit: TemperatureUnit) => void
+  setWindSpeedUnit: (unit: WindSpeedUnit) => void
 }
 
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [tempUnit, setTempUnit] = useState<'C' | 'F'>('C')
-  const [windUnit, setWindUnit] = useState<'kmh' | 'mph'>('kmh')
+export function SettingsModal({
+  isOpen,
+  onClose,
+  temperatureUnit,
+  windSpeedUnit,
+  setTemperatureUnit,
+  setWindSpeedUnit
+}: SettingsModalProps) {
 
   if (!isOpen) return null
 
@@ -44,25 +53,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="flex gap-2" role="group" aria-label="Temperature unit selection">
               <button
                 type="button"
-                onClick={() => setTempUnit('C')}
+                onClick={() => setTemperatureUnit('C')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
-                  tempUnit === 'C'
+                  temperatureUnit === 'C'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                aria-pressed={tempUnit === 'C'}
+                aria-pressed={temperatureUnit === 'C'}
               >
                 Celsius (°C)
               </button>
               <button
                 type="button"
-                onClick={() => setTempUnit('F')}
+                onClick={() => setTemperatureUnit('F')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
-                  tempUnit === 'F'
+                  temperatureUnit === 'F'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                aria-pressed={tempUnit === 'F'}
+                aria-pressed={temperatureUnit === 'F'}
               >
                 Fahrenheit (°F)
               </button>
@@ -77,25 +86,25 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <div className="flex gap-2" role="group" aria-label="Wind speed unit selection">
               <button
                 type="button"
-                onClick={() => setWindUnit('kmh')}
+                onClick={() => setWindSpeedUnit('kmh')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
-                  windUnit === 'kmh'
+                  windSpeedUnit === 'kmh'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                aria-pressed={windUnit === 'kmh'}
+                aria-pressed={windSpeedUnit === 'kmh'}
               >
                 km/h
               </button>
               <button
                 type="button"
-                onClick={() => setWindUnit('mph')}
+                onClick={() => setWindSpeedUnit('mph')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
-                  windUnit === 'mph'
+                  windSpeedUnit === 'mph'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
-                aria-pressed={windUnit === 'mph'}
+                aria-pressed={windSpeedUnit === 'mph'}
               >
                 mph
               </button>

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useWeather } from '../hooks/useWeather'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { WeatherSkeleton } from './WeatherSkeleton'
+import { formatTemperature, formatWindSpeed } from '../lib/unitConversion'
+import { useSettingsContext } from '../contexts/SettingsContext'
 
 interface WeatherDisplayProps {
   /** Latitude coordinate */
@@ -85,6 +87,7 @@ function formatCacheAge(seconds: number): string {
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
   const { weather, loading, refreshing, showSkeleton, error, cacheAge, offline, retry } = useWeather(lat, lon)
+  const { temperatureUnit, windSpeedUnit } = useSettingsContext()
 
   // Track previous weather data for change detection
   const prevWeatherRef = useRef<typeof weather>(null)
@@ -227,7 +230,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
             textColors.primary} ${changes.temperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
           }`}
         >
-          {Math.round(weather.temperature)}°
+          {formatTemperature(weather.temperature, temperatureUnit)}
         </p>
         {/* Feels like temperature - shown when differs from actual by >2° */}
         {Math.abs(weather.temperature - weather.apparentTemperature) > 2 && (
@@ -236,7 +239,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
               textColors.secondary} ${changes.apparentTemperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
             }`}
           >
-            Feels like {Math.round(weather.apparentTemperature)}°
+            Feels like {formatTemperature(weather.apparentTemperature, temperatureUnit)}
           </p>
         )}
       </section>
@@ -260,7 +263,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
           <span className="text-lg" role="img" aria-label="Wind">
             💨
           </span>
-          <span>{Math.round(weather.windSpeed)} km/h</span>
+          <span>{formatWindSpeed(weather.windSpeed, windSpeedUnit)}</span>
         </div>
         {weather.isDay === 1 ? (
           <div className="flex items-center space-x-1">

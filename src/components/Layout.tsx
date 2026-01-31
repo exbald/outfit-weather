@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ReactNode } from 'react'
 import { Drawer } from './Drawer'
 import { SettingsModal } from './SettingsModal'
+import { useSettingsContext } from '../contexts/SettingsContext'
 import type { OutfitRecommendation } from '../hooks/useOutfit'
 
 interface LayoutProps {
@@ -22,6 +23,7 @@ interface LayoutProps {
  */
 export function Layout({ children, outfits, temperature, weatherCode, isDay }: LayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const { temperatureUnit, windSpeedUnit, setTemperatureUnit, setWindSpeedUnit } = useSettingsContext()
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,6 +81,10 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        temperatureUnit={temperatureUnit}
+        windSpeedUnit={windSpeedUnit}
+        setTemperatureUnit={setTemperatureUnit}
+        setWindSpeedUnit={setWindSpeedUnit}
       />
     </div>
   )

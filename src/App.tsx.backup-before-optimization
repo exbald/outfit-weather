@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { Layout } from './components/Layout'
 import { WeatherDisplay } from './components/WeatherDisplay'
-import { DevTests } from './components/DevTests'
+import { OutfitEmojiTest } from './components/OutfitEmojiTest'
+import { WeatherCodeTest } from './components/WeatherCodeTest'
+import { WeatherModifierTest } from './components/WeatherModifierTest'
+import { WeatherCacheTest } from './components/WeatherCacheTest'
+import { WindModifierTest } from './components/WindModifierTest'
+import { UVModifierTest } from './components/UVModifierTest'
+import { ServiceWorkerTest } from './components/ServiceWorkerTest'
 import { InstallButton } from './components/InstallButton'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useAdaptiveBackground } from './hooks/useAdaptiveBackground'
@@ -356,7 +362,13 @@ function App() {
             onCancel={() => setShowManualEntry(false)}
             textColors={textColors}
           />
-          <DevTests />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+            <div className="space-y-8">
+              <ServiceWorkerTest />
+              <WeatherCacheTest />
+            </div>
+          </section>
         </Layout>
       </div>
     )
@@ -368,7 +380,18 @@ function App() {
       <div style={backgroundStyle}>
         <Layout>
           <LocationPermissionPrompt onAllow={grantPermission} textColors={textColors} />
-          <DevTests />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+            <div className="space-y-8">
+              <ServiceWorkerTest />
+              <WeatherCacheTest />
+              <OutfitEmojiTest />
+              <WeatherCodeTest />
+              <WeatherModifierTest />
+              <WindModifierTest />
+              <UVModifierTest />
+            </div>
+          </section>
         </Layout>
       </div>
     )
@@ -380,7 +403,18 @@ function App() {
       <div style={backgroundStyle}>
         <Layout>
           <LocationLoading textColors={textColors} />
-          <DevTests />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+            <div className="space-y-8">
+              <ServiceWorkerTest />
+              <WeatherCacheTest />
+              <OutfitEmojiTest />
+              <WeatherCodeTest />
+              <WeatherModifierTest />
+              <WindModifierTest />
+              <UVModifierTest />
+            </div>
+          </section>
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
       </div>
@@ -395,7 +429,17 @@ function App() {
         <div style={backgroundStyle}>
           <Layout>
             <LocationTimeout onRetry={requestLocation} textColors={textColors} />
-            <DevTests />
+            <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+              <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+              <div className="space-y-8">
+                <ServiceWorkerTest />
+                <WeatherCacheTest />
+                <OutfitEmojiTest />
+                <WeatherCodeTest />
+                <WeatherModifierTest />
+                <WindModifierTest />
+              </div>
+            </section>
           </Layout>
           <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
         </div>
@@ -412,7 +456,18 @@ function App() {
             onManualLocation={handleManualLocationClick}
             textColors={textColors}
           />
-          <DevTests />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+            <div className="space-y-8">
+              <ServiceWorkerTest />
+              <WeatherCacheTest />
+              <OutfitEmojiTest />
+              <WeatherCodeTest />
+              <WeatherModifierTest />
+              <WindModifierTest />
+              <UVModifierTest />
+            </div>
+          </section>
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
       </div>
@@ -438,8 +493,18 @@ function App() {
               locationName={locationName ?? undefined}
             />
 
-            {/* Development tests only - removed from production build */}
-            <DevTests />
+            {/* Test components for development */}
+            <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+              <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+              <div className="space-y-8">
+                <WeatherCacheTest />
+                <OutfitEmojiTest />
+                <WeatherCodeTest />
+                <WeatherModifierTest />
+                <WindModifierTest />
+                <UVModifierTest />
+              </div>
+            </section>
           </div>
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
