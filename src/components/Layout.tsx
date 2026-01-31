@@ -2,16 +2,21 @@ import { useState } from 'react'
 import { ReactNode } from 'react'
 import { Drawer } from './Drawer'
 import { SettingsModal } from './SettingsModal'
+import type { OutfitRecommendation } from '../hooks/useOutfit'
 
 interface LayoutProps {
   children: ReactNode
+  outfit?: OutfitRecommendation
+  temperature?: number
+  weatherCode?: number
+  isDay?: number
 }
 
 /**
  * Main layout component for OutFitWeather app
- * Provides semantic HTML structure with header, main content area, and drawer placeholder
+ * Provides semantic HTML structure with header, main content area, and drawer
  */
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, outfit, temperature, weatherCode, isDay }: LayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   return (
@@ -59,7 +64,12 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Drawer component - for outfit recommendations */}
-      <Drawer />
+      <Drawer
+        outfit={outfit}
+        temperature={temperature}
+        weatherCode={weatherCode}
+        isDay={isDay}
+      />
 
       {/* Settings modal */}
       <SettingsModal

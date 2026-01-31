@@ -514,8 +514,8 @@ export function getUVIndexCategoryDescription(category: UVIndexCategory): string
 
 /**
  * Get UV modifier emojis based on UV index and time of day
- * Adds sunglasses for moderate+ UV during daytime
- * Adds hat for extreme UV during daytime
+ * Adds sunglasses for moderate+ UV during daytime (UV ≥ 3)
+ * Adds hat for high+ UV during daytime (UV ≥ 6)
  *
  * @param uvIndex - Maximum UV index for the day
  * @param isDay - 1 for daytime, 0 for nighttime
@@ -524,6 +524,7 @@ export function getUVIndexCategoryDescription(category: UVIndexCategory): string
  * @example
  * ```ts
  * getUVModifierEmojis(5, 1)  // ['🕶️'] (moderate UV, daytime)
+ * getUVModifierEmojis(6, 1)  // ['🕶️', '🧢'] (high UV, daytime)
  * getUVModifierEmojis(10, 1) // ['🕶️', '🧢'] (extreme UV, daytime)
  * getUVModifierEmojis(8, 0)  // [] (high UV, nighttime - no sunglasses needed)
  * ```
@@ -538,13 +539,13 @@ export function getUVModifierEmojis(uvIndex: number, isDay: number): string[] {
 
   const category = getUVIndexCategory(uvIndex)
 
-  // Add sunglasses for moderate, high, and extreme UV
+  // Add sunglasses for moderate, high, and extreme UV (UV ≥ 3)
   if (category === 'moderate' || category === 'high' || category === 'extreme') {
     additional.push('🕶️')
   }
 
-  // Add hat for extreme UV
-  if (category === 'extreme') {
+  // Add hat for high and extreme UV (UV ≥ 6)
+  if (category === 'high' || category === 'extreme') {
     additional.push('🧢')
   }
 

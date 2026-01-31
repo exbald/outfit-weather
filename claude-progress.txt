@@ -3263,3 +3263,205 @@ Continue with next pending feature in the Outfit Logic category.
 - Umbrella emoji (☂️) is added to the end of the outfit array
 - "Rain expected" message can be appended to one-liner or shown separately
 
+
+[Testing] Feature #40 Regression Test - 2025-01-31
+---------------------------------------------------
+✅ REGRESSION TEST PASSED - Feature #40 still working correctly
+
+Feature: Background refresh fetches new data (Caching)
+
+Verification Summary:
+- Step 1: Set up refresh interval ✅
+  - BACKGROUND_REFRESH_INTERVAL constant defined (30 minutes)
+  - setInterval called with correct interval
+  - Dependency array [lat, lon] ensures reset on location change
+
+- Step 2: Fetch new data silently ✅
+  - Console logging: '[Background Refresh] Refreshing weather data...'
+  - Uses refreshing state (not loading)
+  - Logic: const isRefresh = weather !== null
+
+- Step 3: Update cache on success ✅
+  - saveWeatherData() called on successful fetch
+  - Cache age reset to 0 on fresh data
+  - Seamless UI update
+
+Memory Management:
+- clearInterval(timer) prevents memory leaks
+- Cleanup function runs on unmount and location change
+- Timer properly tracked in state
+
+Integration:
+- Works with Feature #11 (localStorage caching)
+- Works with Feature #37 (cache infrastructure)
+- Works with Feature #38 (refreshing state indicator)
+- Works with Feature #48 (network failure fallback)
+
+Automated Tests: 15/15 PASS ✅
+
+Code Changes Since Implementation:
+- Feature #12 added daily forecast parsing
+- No changes to background refresh mechanism
+- All subsequent features integrated cleanly
+
+Status: ✅ PASSING - NO REGRESSION DETECTED
+
+Report: FEATURE_40_REGRESSION_TEST.md
+Testing feature release - feature #40 verified and passing
+
+## Session: Feature #59 - Skeleton UI after 1 second
+
+### Date: 2025-01-31
+
+### Feature: #59 - Skeleton shown after 1 second
+
+### Implementation Summary:
+
+Created a skeleton loading UI that appears after 1 second of fetching weather data. This provides visual feedback during slower network conditions while avoiding skeleton flash for fast loads.
+
+### Changes Made:
+
+1. **Created WeatherSkeleton Component** (`src/components/WeatherSkeleton.tsx`)
+   - Matches WeatherDisplay layout with gray placeholder boxes
+   - Uses `animate-pulse` for subtle animation
+   - Includes ARIA labels for accessibility
+   - Supports dark mode with `dark:bg-gray-600`
+
+2. **Enhanced useWeather Hook** (`src/hooks/useWeather.ts`)
+   - Added `showSkeleton` state to track whether 1-second threshold has passed
+   - Added `skeletonTimer` state for cleanup
+   - Set 1-second timeout in `fetchWeather()` when no data exists yet
+   - Clear timeout in finally block and cleanup function
+   - Added console logging for debugging
+
+3. **Updated WeatherDisplay Component** (`src/components/WeatherDisplay.tsx`)
+   - Import WeatherSkeleton component
+   - Check `showSkeleton` before checking `loading`
+   - Render skeleton when `showSkeleton === true`
+   - Fall back to emoji loading indicator for first second
+
+4. **Test File** (`src/components/__tests__/WeatherSkeleton.test.tsx`)
+   - Unit tests for skeleton timing logic
+   - Manual testing checklist for browser verification
+
+### Loading State Flow:
+
+```
+Initial Load (0-1 second):
+├─ loading: true
+├─ showSkeleton: false
+└─ UI: 🌤️ emoji with "Fetching weather data..."
+
+After 1 Second (if still loading):
+├─ loading: true
+├─ showSkeleton: true
+└─ UI: Gray skeleton boxes matching weather layout
+
+Data Arrives:
+├─ loading: false
+├─ showSkeleton: false
+└─ UI: Real weather data
+```
+
+### Test Steps Verification:
+
+✅ **Step 1: Set 1-second timeout**
+   - Implemented in `useWeather.ts` line 92-99
+   - Timer only created for initial load (not refresh)
+   - Proper cleanup on unmount/data arrival
+
+✅ **Step 2: Create skeleton components**
+   - Full WeatherSkeleton component created
+   - Layout matches WeatherDisplay:
+     - Location name (small box)
+     - Weather icon (large circle)
+     - Temperature (prominent tall box)
+     - Condition text (medium box)
+     - Weather details (two icon + text pairs)
+     - Location coordinates (two small boxes)
+     - Cache age (small box)
+
+✅ **Step 3: Display skeleton after timeout**
+   - WeatherDisplay checks `showSkeleton` before `loading`
+   - Skeleton renders after 1 second threshold
+   - Falls back to emoji for first second
+
+### Code Quality:
+
+✅ TypeScript compilation: No errors in modified files
+✅ ESLint: No warnings
+✅ Accessibility: ARIA labels included
+✅ Performance: Minimal overhead, proper cleanup
+✅ Dark mode: Supported with conditional classes
+
+### Edge Cases Handled:
+
+- Fast loads (< 1s): Skeleton never appears
+- Slow loads (> 1s): Skeleton appears after threshold
+- Refresh with data: Skeleton never shows
+- Component unmount: Timer cleared properly
+- Error during fetch: Skeleton hidden in finally block
+
+### Console Logs:
+
+- `[Skeleton] Loading took >1 second, showing skeleton UI` - After 1 second
+- `[Skeleton] Cleared skeleton timeout` - On cleanup
+
+### Files Modified:
+
+- `src/components/WeatherSkeleton.tsx` (NEW)
+- `src/hooks/useWeather.ts` (MODIFIED)
+- `src/components/WeatherDisplay.tsx` (MODIFIED)
+- `src/components/__tests__/WeatherSkeleton.test.tsx` (NEW)
+- `FEATURE-59-VERIFICATION.md` (NEW)
+
+### Git Commit:
+
+Commit: a329bd7
+Message: "feat: implement skeleton UI shown after 1 second loading - Feature #59"
+
+### Status: ✅ COMPLETE
+
+Feature #59 is fully implemented and ready for testing.
+[Testing] Feature #3 verified - still passing (no regression)
+
+## Session Date: 2025-01-31 19:50
+
+## Feature Completed: #49 - No cache + no network shows error
+
+### What Was Accomplished:
+
+This feature was already fully implemented. Verification confirmed:
+
+1. Error State Detection in useWeather hook
+   - Checks for cached data when API fails
+   - If cached exists: offline=true (Feature #48)
+   - If NO cached exists: offline=false (Feature #49)
+
+2. Error Screen Display in WeatherDisplay component
+   - Shows error when error AND no weather data
+   - Friendly heading and warning emoji
+   - Retry button available
+
+3. Three-State Error Handling works correctly
+   - Success: Fresh data
+   - Offline: Cached data with indicator
+   - No Cache: Error screen with retry
+
+### Code Quality:
+- TypeScript compilation passes
+- Build succeeds
+- Tests passing
+- No mock data patterns
+
+### Feature Status: PASSING
+
+Feature #49 marked as passing.
+
+## Updated Project Status:
+- Total Features: 79
+- Passing: 38
+- Completion: 48.1%
+
+## Git Commits:
+- 0ca9f75 docs: verify no cache + no network error screen - Feature #49
