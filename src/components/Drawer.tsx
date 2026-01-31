@@ -82,23 +82,6 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
   // Get fallback outfit when current outfit is null (Feature #52)
   const displayOutfit = currentOutfit ?? getFallbackOutfit(activeView)
 
-  // Handle Escape key to close drawer (accessibility enhancement)
-  useEffect(() => {
-    const handleEscapeKey = (e: KeyboardEvent) => {
-      if (isExpanded && e.key === 'Escape') {
-        collapseDrawer()
-      }
-    }
-
-    if (isExpanded) {
-      document.addEventListener('keydown', handleEscapeKey)
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey)
-    }
-  }, [isExpanded, collapseDrawer])
-
   const touchStartY = useRef<number>(0)
   const touchStartTime = useRef<number>(0)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -154,19 +137,6 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
     }
   }, [isExpanded, canPerformAction, expand, collapse])
 
-  const expandDrawer = useCallback(() => {
-    if (!canPerformAction()) return
-
-    lastActionTimeRef.current = Date.now()
-    isAnimatingRef.current = true
-
-    setTimeout(() => {
-      isAnimatingRef.current = false
-    }, 400)
-
-    expand()
-  }, [canPerformAction, expand])
-
   const collapseDrawer = useCallback(() => {
     if (!canPerformAction()) return
 
@@ -179,6 +149,23 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
 
     collapse()
   }, [canPerformAction, collapse])
+
+  // Handle Escape key to close drawer (accessibility enhancement)
+  useEffect(() => {
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (isExpanded && e.key === 'Escape') {
+        collapseDrawer()
+      }
+    }
+
+    if (isExpanded) {
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isExpanded, collapseDrawer])
 
   // Touch start - record initial position and time
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
@@ -225,7 +212,13 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
     if (!isExpanded) {
       // Collapsed: expand on upward swipe
       if (deltaY > 0 && (meetsDistanceThreshold || meetsVelocityThreshold)) {
-        expandDrawer()
+        // Feature #77: Check if we can perform the action
+        if (canPerformAction()) {
+          lastActionTimeRef.current = Date.now()
+          isAnimatingRef.current = true
+          setTimeout(() => { isAnimatingRef.current = false }, 400)
+          expand()
+        }
       }
     } else {
       // Expanded: collapse on downward swipe
@@ -307,12 +300,50 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 aria-hidden="true"
               />
 
-              {/* Navigation tabs/pills */}
+              {/* Navigation with Previous/Next arrow buttons and tabs (Feature #35) */}
               <div
                 className="flex items-center justify-center gap-2 mb-3"
                 role="tablist"
                 aria-label="Outfit view selection"
               >
+                {/* Previous button (Feature #35) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const views: ('now' | 'today' | 'tomorrow')[] = ['now', 'today', 'tomorrow']
+                    const currentIndex = views.indexOf(activeView)
+                    if (currentIndex > 0) {
+                      setActiveView(views[currentIndex - 1])
+                    }
+                  }}
+                  disabled={activeView === 'now'}
+                  aria-label="Previous outfit view"
+                  className={`
+                    p-2 rounded-full transition-all duration-200 flex-shrink-0
+                    ${activeView === 'now'
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : 'text-gray-600 hover:bg-gray-200 active:bg-gray-300'
+                    }
+                  `}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 19.5L8.25 12l7.5-7.5"
+                    />
+                  </svg>
+                </button>
+
+                {/* Tab buttons */}
                 {(['now', 'today', 'tomorrow'] as const).map((view) => (
                   <button
                     key={view}
@@ -322,7 +353,7 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                     aria-controls="outfit-panel"
                     onClick={() => setActiveView(view)}
                     className={`
-                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
+                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex-shrink-0
                       ${activeView === view
                         ? 'bg-blue-500 text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -332,6 +363,43 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                     {view.charAt(0).toUpperCase() + view.slice(1)}
                   </button>
                 ))}
+
+                {/* Next button (Feature #35) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const views: ('now' | 'today' | 'tomorrow')[] = ['now', 'today', 'tomorrow']
+                    const currentIndex = views.indexOf(activeView)
+                    if (currentIndex < views.length - 1) {
+                      setActiveView(views[currentIndex + 1])
+                    }
+                  }}
+                  disabled={activeView === 'tomorrow'}
+                  aria-label="Next outfit view"
+                  className={`
+                    p-2 rounded-full transition-all duration-200 flex-shrink-0
+                    ${activeView === 'tomorrow'
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : 'text-gray-600 hover:bg-gray-200 active:bg-gray-300'
+                    }
+                  `}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
+                </button>
               </div>
 
               {/* View indicator dots (Feature #34) */}
