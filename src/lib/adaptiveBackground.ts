@@ -131,7 +131,8 @@ const LIGHT_MODE_TEXT_COLORS = {
   primary: '#111827',   // gray-900 - For headings, important text (contrast: 15.9:1 on white)
   secondary: '#374151', // gray-700 - For body text (contrast: 7.1:1 on white)
   tertiary: '#6b7280',  // gray-500 - For supporting text (contrast: 4.6:1 on white) ✓ WCAG AA
-  muted: '#9ca3af',     // gray-400 - For subtle text (contrast: 2.8:1 on white) - USE SPARINGLY
+  muted: '#6b7280',     // gray-500 - For subtle text (contrast: 4.6:1 on white) ✓ WCAG AA
+                        // Changed from gray-400 (2.8:1) to gray-500 (4.6:1) for WCAG AA compliance
 }
 
 /**

@@ -1,4 +1,5 @@
 import { useState, useRef, TouchEvent } from 'react'
+import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 
 interface DrawerProps {
   /** Outfit recommendation to display when drawer is expanded */
@@ -7,14 +8,23 @@ interface DrawerProps {
     oneLiner: string
     view: 'now' | 'today' | 'tomorrow'
   }
+  /** Weather data for adaptive text colors on drawer (white background always) */
+  temperature?: number
+  weatherCode?: number
+  isDay?: number
 }
 
 /**
  * Drawer component for outfit recommendations
  * Shows a collapsed peek/handle at bottom of screen, expands on interaction
  * Supports swipe-up gesture to expand, swipe-down/click to collapse
+ *
+ * Accessibility:
+ * - Drawer uses fixed white background (frosted glass effect)
+ * - Text colors optimized for white background
+ * - WCAG AA compliant contrast ratios
  */
-export function Drawer({ outfit }: DrawerProps) {
+export function Drawer({ outfit, temperature, weatherCode, isDay }: DrawerProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
@@ -29,6 +39,14 @@ export function Drawer({ outfit }: DrawerProps) {
   const VELOCITY_THRESHOLD = 0.5
   // Maximum drag distance (prevents dragging drawer off-screen)
   const MAX_DRAG_OFFSET = 300
+
+  // Drawer always has white/semi-transparent background
+  // Use adaptive colors for white background (fallback to cool light color)
+  const { classes: textColors } = useAdaptiveTextColors(
+    temperature ?? 15, // Default mild temperature for white background
+    weatherCode ?? 0,
+    isDay ?? 1
+  )
 
   const toggleDrawer = () => {
     setIsExpanded(!isExpanded)
@@ -135,8 +153,8 @@ export function Drawer({ outfit }: DrawerProps) {
                 className="w-12 h-1.5 bg-gray-400 rounded-full mb-2"
                 aria-hidden="true"
               />
-              {/* Swipe hint text */}
-              <p className="text-sm text-gray-500 font-medium">
+              {/* Swipe hint text - use tertiary color for better contrast on white */}
+              <p className={`text-sm font-medium ${textColors.secondary}`}>
                 Swipe up · What to wear
               </p>
             </div>
@@ -170,12 +188,12 @@ export function Drawer({ outfit }: DrawerProps) {
               </div>
 
               {/* Friendly one-liner text */}
-              <p className="text-center text-xl font-medium text-gray-800">
+              <p className={`text-center text-xl font-medium ${textColors.primary}`}>
                 {outfit.oneLiner}
               </p>
 
               {/* Navigation hint */}
-              <p className="text-center text-sm text-gray-500 mt-4">
+              <p className={`text-center text-sm mt-4 ${textColors.secondary}`}>
                 Tap or swipe down to close
               </p>
             </div>
@@ -188,10 +206,10 @@ export function Drawer({ outfit }: DrawerProps) {
                 className="w-12 h-1.5 bg-gray-400 rounded-full mx-auto mb-4"
                 aria-hidden="true"
               />
-              <p className="text-gray-600">
+              <p className={textColors.secondary}>
                 Check outside! 🤷
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className={`text-sm mt-2 ${textColors.tertiary}`}>
                 Couldn't determine outfit
               </p>
             </div>

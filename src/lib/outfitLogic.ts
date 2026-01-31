@@ -251,6 +251,11 @@ export function getOutfitEmojisString(bucket: TemperatureBucket): string {
 }
 
 /**
+ * UV index category type
+ */
+export type UVIndexCategory = 'low' | 'moderate' | 'high' | 'extreme'
+
+/**
  * Wind speed unit type
  */
 export type WindSpeedUnit = 'kmh' | 'mph' | 'ms' | 'kn'
@@ -461,4 +466,112 @@ export function getOutfitWithWeather(
 
   // Return base outfit with additional weather-specific items
   return [...baseOutfit, ...additionalEmojis]
+}
+
+/**
+ * UV Index thresholds for categorization
+ * Based on WHO UV Index standards:
+ * - Low: 0-2 (Minimal protection required)
+ * - Moderate: 3-5 (Protection required)
+ * - High: 6-7 (Protection required)
+ * - Very High: 8-10 (Extra protection required)
+ * - Extreme: 11+ (Extra protection required)
+ *
+ * We group "very high" and "extreme" together as "extreme"
+ */
+export function getUVIndexCategory(uvIndex: number): UVIndexCategory {
+  if (uvIndex <= 2) return 'low'
+  if (uvIndex <= 5) return 'moderate'
+  if (uvIndex <= 7) return 'high'
+  return 'extreme'
+}
+
+/**
+ * Get UV index category display name
+ */
+export function getUVIndexCategoryDisplayName(category: UVIndexCategory): string {
+  const names: Record<UVIndexCategory, string> = {
+    low: 'Low',
+    moderate: 'Moderate',
+    high: 'High',
+    extreme: 'Extreme'
+  }
+  return names[category]
+}
+
+/**
+ * Get UV index category description with health guidance
+ */
+export function getUVIndexCategoryDescription(category: UVIndexCategory): string {
+  const descriptions: Record<UVIndexCategory, string> = {
+    low: 'Minimal protection required. Safe to be outside.',
+    moderate: 'Protection required. Seek shade during midday hours.',
+    high: 'Protection required. Reduce time in sun between 10am-4pm.',
+    extreme: 'Extra protection required. Avoid sun exposure between 10am-4pm.'
+  }
+  return descriptions[category]
+}
+
+/**
+ * Get UV modifier emojis based on UV index and time of day
+ * Adds sunglasses for moderate+ UV during daytime
+ * Adds hat for extreme UV during daytime
+ *
+ * @param uvIndex - Maximum UV index for the day
+ * @param isDay - 1 for daytime, 0 for nighttime
+ * @returns Array of additional UV protection emojis
+ *
+ * @example
+ * ```ts
+ * getUVModifierEmojis(5, 1)  // ['🕶️'] (moderate UV, daytime)
+ * getUVModifierEmojis(10, 1) // ['🕶️', '🧢'] (extreme UV, daytime)
+ * getUVModifierEmojis(8, 0)  // [] (high UV, nighttime - no sunglasses needed)
+ * ```
+ */
+export function getUVModifierEmojis(uvIndex: number, isDay: number): string[] {
+  const additional: string[] = []
+
+  // Only add UV protection during daytime
+  if (isDay === 0) {
+    return additional
+  }
+
+  const category = getUVIndexCategory(uvIndex)
+
+  // Add sunglasses for moderate, high, and extreme UV
+  if (category === 'moderate' || category === 'high' || category === 'extreme') {
+    additional.push('🕶️')
+  }
+
+  // Add hat for extreme UV
+  if (category === 'extreme') {
+    additional.push('🧢')
+  }
+
+  return additional
+}
+
+/**
+ * Apply UV modifier to outfit emojis
+ * Combines base outfit with UV-specific protection items
+ *
+ * @param baseOutfit - Array of outfit emojis
+ * @param uvIndex - Maximum UV index for the day
+ * @param isDay - 1 for daytime, 0 for nighttime
+ * @returns Array of outfit emojis with UV modifiers applied
+ *
+ * @example
+ * ```ts
+ * getOutfitWithUV(['👕', '👖', '👟'], 3, 1)  // ['👕', '👖', '👟', '🕶️']
+ * getOutfitWithUV(['👕', '🩳', '👟'], 11, 1) // ['👕', '🩳', '👟', '🕶️', '🧢']
+ * getOutfitWithUV(['🧥', '🧣', '👖'], 8, 0)  // ['🧥', '🧣', '👖'] (nighttime)
+ * ```
+ */
+export function getOutfitWithUV(
+  baseOutfit: string[],
+  uvIndex: number,
+  isDay: number
+): string[] {
+  const uvEmojis = getUVModifierEmojis(uvIndex, isDay)
+  return [...baseOutfit, ...uvEmojis]
 }

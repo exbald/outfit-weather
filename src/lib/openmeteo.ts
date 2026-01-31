@@ -5,6 +5,109 @@
  */
 
 /**
+ * Configuration for retry behavior
+ */
+export interface RetryConfig {
+  /** Maximum number of retry attempts (default: 3) */
+  maxRetries?: number
+  /** Initial delay in milliseconds (default: 1000ms) */
+  initialDelayMs?: number
+  /** Backoff multiplier (default: 2 = exponential backoff) */
+  backoffMultiplier?: number
+  /** Maximum delay between retries in milliseconds (default: 10000ms) */
+  maxDelayMs?: number
+}
+
+/**
+ * Default retry configuration
+ */
+const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
+  maxRetries: 3,
+  initialDelayMs: 1000,
+  backoffMultiplier: 2,
+  maxDelayMs: 10000
+}
+
+/**
+ * Sleep/delay utility for retry backoff
+ * @param ms - Milliseconds to delay
+ * @returns Promise that resolves after delay
+ */
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Wrapper function to retry async operations with exponential backoff
+ *
+ * Retry strategy:
+ * - Attempt 1: Immediate (no delay)
+ * - Attempt 2: Wait 1 second (1000ms)
+ * - Attempt 3: Wait 2 seconds (2000ms)
+ * - Attempt 4: Wait 4 seconds (4000ms)
+ * - And so on...
+ *
+ * @param fn - Async function to retry
+ * @param config - Retry configuration options
+ * @returns Result of the async function
+ * @throws Error if all retries fail
+ */
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = {}
+): Promise<T> {
+  const { maxRetries, initialDelayMs, backoffMultiplier, maxDelayMs } = {
+    ...DEFAULT_RETRY_CONFIG,
+    ...config
+  }
+
+  let lastError: Error | undefined
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Attempt the operation
+      const result = await fn()
+
+      // If successful and not the first attempt, log the recovery
+      if (attempt > 0) {
+        console.log(
+          `[Retry] Operation succeeded on attempt ${attempt + 1}/${maxRetries + 1}`
+        )
+      }
+
+      return result
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+
+      // Don't retry after the last attempt
+      if (attempt >= maxRetries) {
+        console.error(
+          `[Retry] All ${maxRetries + 1} attempts failed. Final error:`,
+          lastError.message
+        )
+        throw lastError
+      }
+
+      // Calculate delay with exponential backoff
+      const delayMs = Math.min(
+        initialDelayMs * Math.pow(backoffMultiplier, attempt),
+        maxDelayMs
+      )
+
+      console.warn(
+        `[Retry] Attempt ${attempt + 1}/${maxRetries + 1} failed: ${lastError.message}. Retrying in ${delayMs}ms...`
+      )
+
+      // Wait before retrying
+      await delay(delayMs)
+    }
+  }
+
+  // TypeScript exhaustiveness check - this should never be reached
+  throw lastError || new Error('Retry failed with unknown error')
+}
+
+/**
  * Weather condition with human-readable description and emoji icon
  */
 export interface WeatherCondition {

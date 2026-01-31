@@ -1,4 +1,5 @@
 import { useWeather } from '../hooks/useWeather'
+import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 
 interface WeatherDisplayProps {
   /** Latitude coordinate */
@@ -31,16 +32,27 @@ function formatCacheAge(seconds: number): string {
  * - Shows cached data immediately if available
  * - Displays subtle loading indicator when refreshing in background
  * - Shows full loading indicator (calm pulse animation) only when no cached data exists
+ *
+ * Accessibility:
+ * - All text colors adapt to background for WCAG AA compliance
+ * - Uses semantic HTML and ARIA labels
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
   const { weather, loading, refreshing, error, cacheAge, offline, retry } = useWeather(lat, lon)
+
+  // Compute adaptive text colors for WCAG AA compliance
+  const { classes: textColors } = useAdaptiveTextColors(
+    weather?.temperature ?? null,
+    weather?.weatherCode ?? null,
+    weather?.isDay ?? null
+  )
 
   if (loading) {
     return (
       <section aria-live="polite" aria-busy="true" aria-label="Loading weather data" className="flex flex-col items-center justify-center py-16 space-y-4">
         {/* Animated weather emoji loading indicator */}
         <div className="text-6xl animate-pulse" role="img" aria-label="Loading weather">🌤️</div>
-        <p className="text-gray-600 text-lg">Fetching weather data...</p>
+        <p className={`text-lg ${textColors.secondary}`}>Fetching weather data...</p>
       </section>
     )
   }
@@ -50,8 +62,8 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
       <section role="alert" aria-labelledby="weather-error-title" className="flex flex-col items-center justify-center py-16 space-y-4 px-4">
         <div className="text-6xl" role="img" aria-label="Error">⚠️</div>
         <div className="text-center max-w-md">
-          <h2 id="weather-error-title" className="text-xl font-semibold text-gray-800 mb-2">Couldn't fetch weather</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 id="weather-error-title" className={`text-xl font-semibold ${textColors.primary} mb-2`}>Couldn't fetch weather</h2>
+          <p className={textColors.secondary + ' mb-4'}>{error}</p>
           <button
             onClick={retry}
             className="px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors"
@@ -73,7 +85,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
       {/* Location name */}
       {locationName && (
         <div className="text-center">
-          <p className="text-sm text-gray-600 font-medium">{locationName}</p>
+          <p className={`text-sm font-medium ${textColors.secondary}`}>{locationName}</p>
         </div>
       )}
 
@@ -82,20 +94,20 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
         {weather.icon}
       </div>
 
-      {/* Current temperature - prominent display */}
+      {/* Current temperature - prominent display (large text) */}
       <section aria-label="Temperature">
-        <p className="text-7xl font-bold text-gray-900 tracking-tight">
+        <p className={`text-7xl font-bold tracking-tight ${textColors.primary}`}>
           {Math.round(weather.temperature)}°
         </p>
       </section>
 
       {/* Weather condition text */}
       <section aria-label="Weather condition">
-        <p className="text-xl text-gray-700">{weather.condition}</p>
+        <p className={`text-xl ${textColors.secondary}`}>{weather.condition}</p>
       </section>
 
       {/* Additional info - wind speed */}
-      <section aria-label="Weather details" className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+      <section aria-label="Weather details" className={`flex items-center justify-center space-x-4 text-sm ${textColors.tertiary}`}>
         <div className="flex items-center space-x-1">
           <span className="text-lg" role="img" aria-label="Wind">
             💨
@@ -122,16 +134,16 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
       {/* Location coordinates (small, subtle) */}
       {!locationName && (
         <section aria-label="Location coordinates" className="text-center">
-          <p className="text-xs text-gray-500">
+          <p className={`text-xs ${textColors.tertiary}`}>
             {weather.location.latitude.toFixed(4)}°, {weather.location.longitude.toFixed(4)}°
           </p>
-          <p className="text-xs text-gray-400">{weather.location.timezone}</p>
+          <p className={`text-xs ${textColors.muted}`}>{weather.location.timezone}</p>
         </section>
       )}
 
       {/* Cache age timestamp */}
       <div className="text-center">
-        <p className={`text-xs ${offline ? 'text-orange-600 font-medium' : 'text-gray-400'}`}>
+        <p className={`text-xs ${offline ? 'text-orange-600 font-medium' : textColors.muted}`}>
           {offline && '📡 '}
           {refreshing ? 'Updating...' : offline ? `Offline · ${formatCacheAge(cacheAge)}` : formatCacheAge(cacheAge)}
         </p>
