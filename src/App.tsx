@@ -314,6 +314,12 @@ function App() {
     currentPosition?.longitude
   )
 
+  // Fetch location name using reverse geocoding (Feature #10)
+  const { locationName } = useLocationName(
+    currentPosition?.latitude,
+    currentPosition?.longitude
+  )
+
   // Generate outfit recommendations based on weather
   const { getCurrentOutfit } = useOutfit(bgWeather)
 

@@ -124,6 +124,12 @@ export function loadWeatherData(
       coords: { lat, lon }
     })
 
+    // Handle migration from old cache format (missing apparentTemperature)
+    if (typeof parsed.data.apparentTemperature !== 'number') {
+      console.log('Migrating old cache format: adding apparentTemperature')
+      parsed.data.apparentTemperature = parsed.data.temperature
+    }
+
     return parsed.data
   } catch (error) {
     // If cache is corrupted, clear it and return null
