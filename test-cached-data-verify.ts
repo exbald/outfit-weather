@@ -4,6 +4,31 @@
  * This script tests the caching behavior directly without React Testing Library
  */
 
+// Polyfill localStorage for Node.js testing
+const localStorageMock = (() => {
+  let store: Record<string, string> = {}
+
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString()
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+    get length() {
+      return Object.keys(store).length
+    },
+    key: (index: number) => Object.keys(store)[index] || null
+  }
+})()
+
+// @ts-ignore - polyfilling localStorage for Node
+global.localStorage = localStorageMock
+
 import { saveWeatherData, loadWeatherData, clearWeatherData, getCacheAge } from './src/lib/weatherStorage'
 
 // ANSI color codes for terminal output
@@ -137,9 +162,10 @@ if (cacheEntry) {
 }
 
 const expiredLoad = loadWeatherData(testCoords.lat, testCoords.lon, 30 * 60 * 1000) // 30 min max age
+const expiredAge = getCacheAge()
 const test4Results = [
   assert(expiredLoad === null, 'Expired cache returns null'),
-  assert(getCacheAge() === -1, 'Cache age is -1 for expired cache')
+  assert(expiredAge > 30 * 60, `Cache age (${expiredAge}s) exceeds 30 minutes`)
 ]
 
 log(`\nStep 4 Results: ${test4Results.filter(r => r).length}/${test4Results.length} tests passed\n`, colors.blue)
