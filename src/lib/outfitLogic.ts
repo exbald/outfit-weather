@@ -211,3 +211,132 @@ export function getOutfitEmojis(bucket: TemperatureBucket): string[] {
 export function getOutfitEmojisString(bucket: TemperatureBucket): string {
   return BASE_OUTFITS[bucket].join('')
 }
+
+/**
+ * Weather modifier types for outfit adjustments
+ */
+export type WeatherModifier = 'rain' | 'snow' | 'none'
+
+/**
+ * Check if a weather code indicates rain conditions
+ * Includes drizzle, rain, freezing rain, and rain showers
+ *
+ * @param weatherCode - Open-Meteo weather code
+ * @returns true if the code indicates rain
+ */
+export function isRainWeather(weatherCode: number): boolean {
+  // Drizzle: 51, 53, 55, 56, 57
+  if (weatherCode >= 51 && weatherCode <= 57) {
+    return true
+  }
+
+  // Rain: 61, 63, 65
+  if (weatherCode >= 61 && weatherCode <= 65) {
+    return true
+  }
+
+  // Freezing rain: 66, 67
+  if (weatherCode >= 66 && weatherCode <= 67) {
+    return true
+  }
+
+  // Rain showers: 80, 81, 82
+  if (weatherCode >= 80 && weatherCode <= 82) {
+    return true
+  }
+
+  // Thunderstorm (includes rain): 95, 96, 99
+  if (weatherCode >= 95 && weatherCode <= 99) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Check if a weather code indicates snow conditions
+ * Includes snow, snow grains, and snow showers
+ *
+ * @param weatherCode - Open-Meteo weather code
+ * @returns true if the code indicates snow
+ */
+export function isSnowWeather(weatherCode: number): boolean {
+  // Freezing drizzle: 56, 57 (already counted in rain, but also snow-like)
+  // Freezing rain: 66, 67 (already counted in rain, but also snow-like)
+
+  // Snow: 71, 73, 75
+  if (weatherCode >= 71 && weatherCode <= 75) {
+    return true
+  }
+
+  // Snow grains: 77
+  if (weatherCode === 77) {
+    return true
+  }
+
+  // Snow showers: 85, 86
+  if (weatherCode >= 85 && weatherCode <= 86) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Get weather modifier type from weather code
+ *
+ * @param weatherCode - Open-Meteo weather code
+ * @returns Weather modifier type
+ */
+export function getWeatherModifier(weatherCode: number): WeatherModifier {
+  if (isRainWeather(weatherCode)) {
+    return 'rain'
+  }
+
+  if (isSnowWeather(weatherCode)) {
+    return 'snow'
+  }
+
+  return 'none'
+}
+
+/**
+ * Additional outfit emojis for weather conditions
+ */
+const WEATHER_MODIFIER_EMOJIS: Record<WeatherModifier, string[]> = {
+  rain: ['☂️'], // Umbrella for rain
+  snow: ['🧣', '🧤'], // Extra scarf and gloves for snow
+  none: [], // No additional items
+}
+
+/**
+ * Apply weather modifier to base outfit emojis
+ * Adds appropriate gear based on weather conditions
+ *
+ * @param bucket - The temperature bucket
+ * @param weatherCode - Open-Meteo weather code
+ * @returns Array of outfit emojis with weather modifiers applied
+ *
+ * @example
+ * ```ts
+ * // Rainy cold day
+ * getOutfitWithWeather('cold', 63) // ['🧥', '🧣', '👖', '🥾', '☂️']
+ *
+ * // Snowy freezing day
+ * getOutfitWithWeather('freezing', 73) // ['🧥', '🧣', '🧤', '🥾', '🧢', '🧣', '🧤']
+ *
+ * // Clear mild day
+ * getOutfitWithWeather('mild', 0) // ['🧥', '👕', '👖', '👟']
+ * ```
+ */
+export function getOutfitWithWeather(
+  bucket: TemperatureBucket,
+  weatherCode: number
+): string[] {
+  const baseOutfit = getOutfitEmojis(bucket)
+  const modifier = getWeatherModifier(weatherCode)
+  const additionalEmojis = WEATHER_MODIFIER_EMOJIS[modifier]
+
+  // Return base outfit with additional weather-specific items
+  return [...baseOutfit, ...additionalEmojis]
+}
