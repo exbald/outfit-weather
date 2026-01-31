@@ -74,12 +74,51 @@ function formatCacheAge(seconds: number): string {
  * - Displays subtle loading indicator when refreshing in background
  * - Shows full loading indicator (calm pulse animation) only when no cached data exists
  *
+ * Seamless updates:
+ * - Detects changes between cached and fresh data
+ * - Applies smooth transitions to changed values only
+ * - Prevents jarring full-page flashes during background refresh
+ *
  * Accessibility:
  * - All text colors adapt to background for WCAG AA compliance
  * - Uses semantic HTML and ARIA labels
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
   const { weather, loading, refreshing, showSkeleton, error, cacheAge, offline, retry } = useWeather(lat, lon)
+
+  // Track previous weather data for change detection
+  const prevWeatherRef = useRef<typeof weather>(null)
+  const [changes, setChanges] = useState({
+    temperatureChanged: false,
+    apparentTemperatureChanged: false,
+    conditionChanged: false,
+    iconChanged: false,
+    windSpeedChanged: false
+  })
+
+  // Detect changes when weather updates
+  useEffect(() => {
+    if (weather && prevWeatherRef.current) {
+      const detectedChanges = compareWeatherData(prevWeatherRef.current, weather)
+      setChanges(detectedChanges)
+
+      // Clear change flags after transition completes (500ms)
+      const timer = setTimeout(() => {
+        setChanges({
+          temperatureChanged: false,
+          apparentTemperatureChanged: false,
+          conditionChanged: false,
+          iconChanged: false,
+          windSpeedChanged: false
+        })
+      }, 500)
+
+      return () => clearTimeout(timer)
+    }
+
+    // Update ref after change detection
+    prevWeatherRef.current = weather
+  }, [weather])
 
   // Compute adaptive text colors for WCAG AA compliance
   const { classes: textColors } = useAdaptiveTextColors(
@@ -171,18 +210,32 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
       )}
 
       {/* Weather icon */}
-      <div className="text-8xl" role="img" aria-label={weather.condition}>
+      <div
+        className={`text-8xl transition-all duration-300 ease-out ${
+          changes.iconChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+        }`}
+        role="img"
+        aria-label={weather.condition}
+      >
         {weather.icon}
       </div>
 
       {/* Current temperature - prominent display (large text) */}
       <section aria-label="Temperature">
-        <p className={`text-7xl font-bold tracking-tight ${textColors.primary}`}>
+        <p
+          className={`text-7xl font-bold tracking-tight transition-all duration-300 ease-out ${
+            textColors.primary} ${changes.temperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+          }`}
+        >
           {Math.round(weather.temperature)}°
         </p>
         {/* Feels like temperature - shown when differs from actual by >2° */}
         {Math.abs(weather.temperature - weather.apparentTemperature) > 2 && (
-          <p className={`text-lg mt-1 ${textColors.secondary}`}>
+          <p
+            className={`text-lg mt-1 transition-all duration-300 ease-out ${
+              textColors.secondary} ${changes.apparentTemperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+            }`}
+          >
             Feels like {Math.round(weather.apparentTemperature)}°
           </p>
         )}
@@ -190,12 +243,20 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
 
       {/* Weather condition text */}
       <section aria-label="Weather condition">
-        <p className={`text-xl ${textColors.secondary}`}>{weather.condition}</p>
+        <p
+          className={`text-xl transition-all duration-300 ease-out ${
+            textColors.secondary} ${changes.conditionChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+          }`}
+        >
+          {weather.condition}
+        </p>
       </section>
 
       {/* Additional info - wind speed */}
       <section aria-label="Weather details" className={`flex items-center justify-center space-x-4 text-sm ${textColors.tertiary}`}>
-        <div className="flex items-center space-x-1">
+        <div className={`flex items-center space-x-1 transition-all duration-300 ease-out ${
+          changes.windSpeedChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+        }`}>
           <span className="text-lg" role="img" aria-label="Wind">
             💨
           </span>
