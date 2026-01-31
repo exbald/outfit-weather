@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { TemperatureUnit, WindSpeedUnit } from '../hooks/useSettings'
 
 interface SettingsModalProps {
@@ -9,6 +10,44 @@ interface SettingsModalProps {
   setWindSpeedUnit: (unit: WindSpeedUnit) => void
 }
 
+/**
+ * Focus trap hook for modals
+ * Prevents keyboard focus from leaving the modal dialog
+ */
+function useFocusTrap(isActive: boolean, containerRef: React.RefObject<HTMLDivElement>) {
+  useEffect(() => {
+    if (!isActive || !containerRef.current) return
+
+    // Get all focusable elements within the modal
+    const focusableElements = containerRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const firstElement = focusableElements[0] as HTMLElement
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+
+    // Focus the first element when modal opens
+    firstElement?.focus()
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+
+      // If Shift + Tab on first element, move to last element
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault()
+        lastElement?.focus()
+      }
+      // If Tab on last element, move to first element
+      else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault()
+        firstElement?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleTab)
+    return () => document.removeEventListener('keydown', handleTab)
+  }, [isActive, containerRef])
+}
+
 export function SettingsModal({
   isOpen,
   onClose,
@@ -17,6 +56,25 @@ export function SettingsModal({
   setTemperatureUnit,
   setWindSpeedUnit
 }: SettingsModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Feature #70: Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (isOpen && e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape)
+    }
+
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen, onClose])
+
+  // Feature #70: Trap focus within modal when open
+  useFocusTrap(isOpen, modalRef)
 
   if (!isOpen) return null
 
@@ -34,6 +92,7 @@ export function SettingsModal({
 
       {/* Modal */}
       <div
+        ref={modalRef}
         className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
