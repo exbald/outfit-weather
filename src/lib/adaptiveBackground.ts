@@ -130,9 +130,10 @@ export function getBackgroundTransition(): string {
 const LIGHT_MODE_TEXT_COLORS = {
   primary: '#111827',   // gray-900 - For headings, important text (contrast: 15.9:1 on white)
   secondary: '#374151', // gray-700 - For body text (contrast: 7.1:1 on white)
-  tertiary: '#6b7280',  // gray-500 - For supporting text (contrast: 4.6:1 on white) ✓ WCAG AA
-  muted: '#6b7280',     // gray-500 - For subtle text (contrast: 4.6:1 on white) ✓ WCAG AA
-                        // Changed from gray-400 (2.8:1) to gray-500 (4.6:1) for WCAG AA compliance
+  tertiary: '#4b5563',  // gray-600 - For supporting text (contrast: 5.8:1 on white) ✓ WCAG AA
+                        // Changed from gray-500 (4.6:1) to gray-600 (5.8:1) for better contrast on colored backgrounds
+  muted: '#4b5563',     // gray-600 - For subtle text (contrast: 5.8:1 on white) ✓ WCAG AA
+                        // Changed from gray-500 (4.6:1) to gray-600 (5.8:1) for better contrast on colored backgrounds
 }
 
 /**
@@ -143,7 +144,8 @@ const DARK_MODE_TEXT_COLORS = {
   primary: '#ffffff',   // white - For headings, important text (contrast: 15+:1 on dark)
   secondary: '#e5e7eb', // gray-100 - For body text (contrast: 11+:1 on #1f2937)
   tertiary: '#d1d5db',  // gray-300 - For supporting text (contrast: 8+:1 on #1f2937)
-  muted: '#9ca3af',     // gray-400 - For subtle text (contrast: 4.5+:1 on dark)
+  muted: '#d1d5db',     // gray-300 - For subtle text (contrast: 6.9:1 on #334155) ✓ WCAG AA
+                        // Changed from gray-400 (4.5:1) to gray-300 (6.9:1) for better contrast on dark backgrounds
 }
 
 /**
@@ -197,15 +199,14 @@ export function getAdaptiveTextClass(
   const lightModeClasses: Record<string, string> = {
     '#111827': 'text-gray-900',
     '#374151': 'text-gray-700',
-    '#6b7280': 'text-gray-500',
-    '#9ca3af': 'text-gray-400',
+    '#4b5563': 'text-gray-600',
+    '#d1d5db': 'text-gray-300',
   }
 
   // Map internal color names to Tailwind classes for dark mode
   const darkModeClasses: Record<string, string> = {
     '#ffffff': 'text-white',
     '#e5e7eb': 'text-gray-100',
-    '#d1d5db': 'text-gray-300',
     '#9ca3af': 'text-gray-400',
   }
 

@@ -280,47 +280,166 @@ export function buildCurrentWeatherUrl(
 }
 
 /**
- * Fetch current weather from Open-Meteo API
+ * Custom error class for weather API errors with user-friendly messages
+ */
+export class WeatherApiError extends Error {
+  constructor(
+    message: string,
+    public readonly userMessage: string,
+    public readonly isRetryable: boolean = true
+  ) {
+    super(message)
+    this.name = 'WeatherApiError'
+  }
+}
+
+/**
+ * Map HTTP error codes to user-friendly messages
+ */
+function getErrorMessageForStatus(status: number, statusText: string): {
+  technical: string
+  user: string
+  isRetryable: boolean
+} {
+  // 4xx errors (client errors) - typically not retryable
+  if (status >= 400 && status < 500) {
+    if (status === 400) {
+      return {
+        technical: `Bad Request: Invalid parameters (${statusText})`,
+        user: 'Invalid location. Please try again.',
+        isRetryable: false
+      }
+    }
+    if (status === 404) {
+      return {
+        technical: `Not Found: API endpoint unavailable (${statusText})`,
+        user: 'Weather service temporarily unavailable.',
+        isRetryable: true
+      }
+    }
+    if (status === 429) {
+      return {
+        technical: `Too Many Requests: Rate limit exceeded (${statusText})`,
+        user: 'Too many requests. Please wait a moment.',
+        isRetryable: true
+      }
+    }
+    return {
+      technical: `Client Error ${status}: ${statusText}`,
+      user: 'Unable to fetch weather. Please try again.',
+      isRetryable: false
+    }
+  }
+
+  // 5xx errors (server errors) - retryable
+  if (status >= 500 && status < 600) {
+    return {
+      technical: `Server Error ${status}: ${statusText}`,
+      user: 'Weather service is having issues. Trying again...',
+      isRetryable: true
+    }
+  }
+
+  // Network or other errors
+  return {
+    technical: `HTTP ${status}: ${statusText}`,
+    user: 'Unable to reach weather service.',
+    isRetryable: true
+  }
+}
+
+/**
+ * Fetch current weather from Open-Meteo API with automatic retry on failure
+ *
+ * Features:
+ * - Exponential backoff retry (1s, 2s, 4s, max 10s)
+ * - User-friendly error messages
+ * - Response validation
+ * - Detailed logging for debugging
+ *
  * @param lat - Latitude coordinate
  * @param lon - Longitude coordinate
  * @param temperatureUnit - Temperature unit (celsius or fahrenheit)
  * @param windSpeedUnit - Wind speed unit (kmh, mph, ms, kn)
+ * @param retryConfig - Optional retry configuration
  * @returns Promise with current weather data
- * @throws Error if fetch fails or returns invalid data
+ * @throws WeatherApiError if fetch fails or returns invalid data
  */
 export async function fetchCurrentWeather(
   lat: number,
   lon: number,
   temperatureUnit: 'celsius' | 'fahrenheit' = 'celsius',
-  windSpeedUnit: 'kmh' | 'mph' | 'ms' | 'kn' = 'kmh'
+  windSpeedUnit: 'kmh' | 'mph' | 'ms' | 'kn' = 'kmh',
+  retryConfig?: RetryConfig
 ): Promise<CurrentWeatherResponse> {
   const url = buildCurrentWeatherUrl(lat, lon, temperatureUnit, windSpeedUnit)
 
-  const response = await fetch(url)
+  try {
+    // Wrap the fetch in retry logic with exponential backoff
+    const data = await retryWithBackoff(async () => {
+      const response = await fetch(url)
 
-  if (!response.ok) {
-    throw new Error(
-      `Open-Meteo API returned ${response.status}: ${response.statusText}`
+      if (!response.ok) {
+        const errorInfo = getErrorMessageForStatus(response.status, response.statusText)
+        throw new WeatherApiError(
+          errorInfo.technical,
+          errorInfo.user,
+          errorInfo.isRetryable
+        )
+      }
+
+      return response.json()
+    }, retryConfig)
+
+    // Validate response has required fields
+    if (!data.current || typeof data.current.temperature !== 'number') {
+      throw new WeatherApiError(
+        'Invalid API response: missing current weather data',
+        'Received invalid weather data. Please try again.',
+        true
+      )
+    }
+
+    if (typeof data.current.weathercode !== 'number') {
+      throw new WeatherApiError(
+        'Invalid API response: missing weather code',
+        'Received incomplete weather data. Please try again.',
+        true
+      )
+    }
+
+    // Validate daily data exists
+    if (!data.daily || !Array.isArray(data.daily.time)) {
+      throw new WeatherApiError(
+        'Invalid API response: missing daily forecast data',
+        'Unable to load forecast. Please try again.',
+        true
+      )
+    }
+
+    return data
+  } catch (error) {
+    // Re-throw WeatherApiError as-is
+    if (error instanceof WeatherApiError) {
+      throw error
+    }
+
+    // Wrap network errors (TypeError: fetch failed, etc.)
+    if (error instanceof TypeError) {
+      throw new WeatherApiError(
+        `Network error: ${error.message}`,
+        'No internet connection. Please check your network.',
+        true
+      )
+    }
+
+    // Wrap unknown errors
+    throw new WeatherApiError(
+      `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      'Something went wrong. Please try again.',
+      true
     )
   }
-
-  const data: CurrentWeatherResponse = await response.json()
-
-  // Validate response has required fields
-  if (!data.current || typeof data.current.temperature !== 'number') {
-    throw new Error('Invalid API response: missing current weather data')
-  }
-
-  if (typeof data.current.weathercode !== 'number') {
-    throw new Error('Invalid API response: missing weather code')
-  }
-
-  // Validate daily data exists
-  if (!data.daily || !Array.isArray(data.daily.time)) {
-    throw new Error('Invalid API response: missing daily forecast data')
-  }
-
-  return data
 }
 
 /**

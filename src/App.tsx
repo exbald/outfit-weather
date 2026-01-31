@@ -34,7 +34,7 @@ function LocationPermissionPrompt({ onAllow, textColors }: { onAllow: () => void
         </p>
         <button
           onClick={onAllow}
-          className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
+          className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium text-lg"
           type="button"
         >
           Allow Location Access
@@ -65,7 +65,7 @@ function LocationPermissionDenied({ onRetry, textColors }: { onRetry: () => void
         <div className="space-y-3">
           <button
             onClick={onRetry}
-            className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
+            className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium text-lg"
             type="button"
           >
             Try Again
@@ -87,6 +87,38 @@ function LocationLoading({ textColors }: { textColors: ReturnType<typeof useAdap
     <section aria-live="polite" aria-busy="true" aria-label="Finding your location" className="flex flex-col items-center justify-center py-16 space-y-4">
       <div className="text-6xl animate-pulse" role="img" aria-label="Loading location">📍</div>
       <p className={`${textColors.secondary} text-lg`}>Finding your location...</p>
+    </section>
+  )
+}
+
+/**
+ * Location timeout error screen component
+ * Shown when GPS location request times out (10 seconds)
+ */
+export function LocationTimeout({ onRetry, textColors }: { onRetry: () => void; textColors: ReturnType<typeof useAdaptiveTextColors>['classes'] }) {
+  return (
+    <section role="alert" aria-labelledby="timeout-title" className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
+      <div className="text-6xl" role="img" aria-label="Clock icon">⏱️</div>
+      <div className="text-center max-w-md">
+        <h2 id="timeout-title" className={`text-xl font-semibold ${textColors.primary} mb-3`}>
+          Taking longer than expected
+        </h2>
+        <p className={`${textColors.secondary} mb-2`}>
+          We couldn't find your location within 10 seconds.
+        </p>
+        <p className={`text-sm ${textColors.muted} mb-6`}>
+          This can happen if GPS signal is weak or you're indoors. Try moving near a window or going outside.
+        </p>
+        <div className="space-y-3">
+          <button
+            onClick={onRetry}
+            className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium text-lg"
+            type="button"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
     </section>
   )
 }
@@ -174,8 +206,33 @@ function App() {
     )
   }
 
-  // Handle location error state
+  // Handle location error state - show appropriate error screen based on error code
   if (locationError) {
+    // Error code 3 = timeout, show timeout-specific screen
+    if (locationError.code === 3) {
+      return (
+        <div style={backgroundStyle}>
+          <Layout>
+            <LocationTimeout onRetry={requestLocation} textColors={textColors} />
+            <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+              <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
+              <div className="space-y-8">
+                <ServiceWorkerTest />
+                <WeatherCacheTest />
+                <OutfitEmojiTest />
+                <WeatherCodeTest />
+                <WeatherModifierTest />
+                <WindModifierTest />
+              </div>
+            </section>
+          </Layout>
+          <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
+        </div>
+      )
+    }
+
+    // Error code 1 = permission denied, show permission-specific screen
+    // Error code 2 = position unavailable, show generic error screen
     return (
       <div style={backgroundStyle}>
         <Layout>

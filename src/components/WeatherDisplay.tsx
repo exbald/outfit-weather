@@ -66,7 +66,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
           <p className={textColors.secondary + ' mb-4'}>{error}</p>
           <button
             onClick={retry}
-            className="px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors"
+            className="px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors text-lg font-medium"
             type="button"
           >
             Retry
