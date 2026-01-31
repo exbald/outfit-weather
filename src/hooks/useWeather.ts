@@ -29,6 +29,7 @@ export interface UseWeatherResult {
   weather: WeatherData | null
   loading: boolean // true only when we have no data at all
   refreshing: boolean // true when we have cached data but are fetching fresh data
+  showSkeleton: boolean // true when loading has taken more than 1 second
   error: string | null
   cacheAge: number // Age of cached data in seconds (-1 if no cache)
   offline: boolean // true when showing cached data due to network failure
@@ -57,6 +58,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [refreshing, setRefreshing] = useState<boolean>(false)
+  const [showSkeleton, setShowSkeleton] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number>(-1)
   const [offline, setOffline] = useState<boolean>(false)
@@ -65,6 +67,8 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   )
   // Track refresh timer for cleanup
   const [refreshTimer, setRefreshTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+  // Track skeleton timer for cleanup
+  const [skeletonTimer, setSkeletonTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
   // Log timer state for debugging (prevents unused variable warning)
   if (refreshTimer !== null) {
@@ -80,9 +84,19 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
       setRefreshing(true)
     } else {
       setLoading(true)
+      setShowSkeleton(false) // Reset skeleton state
     }
     setError(null)
     setOffline(false) // Reset offline state on new fetch
+
+    // Set skeleton timeout after 1 second if no data exists
+    if (!isRefresh) {
+      const timer = setTimeout(() => {
+        console.log('[Skeleton] Loading took >1 second, showing skeleton UI')
+        setShowSkeleton(true)
+      }, 1000)
+      setSkeletonTimer(timer)
+    }
 
     try {
       const data = await fetchCurrentWeather(latitude, longitude)
@@ -131,6 +145,12 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     } finally {
       setLoading(false)
       setRefreshing(false)
+      setShowSkeleton(false)
+      // Clear skeleton timer
+      if (skeletonTimer) {
+        clearTimeout(skeletonTimer)
+        setSkeletonTimer(null)
+      }
     }
   }
 
@@ -174,11 +194,15 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
 
       setRefreshTimer(timer)
 
-      // Cleanup: clear interval when component unmounts or coords change
+      // Cleanup: clear interval and skeleton timer when component unmounts or coords change
       return () => {
         if (timer) {
           clearInterval(timer)
           console.log('[Background Refresh] Cleared refresh interval')
+        }
+        if (skeletonTimer) {
+          clearTimeout(skeletonTimer)
+          console.log('[Skeleton] Cleared skeleton timeout')
         }
       }
     }
@@ -188,6 +212,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     weather,
     loading,
     refreshing,
+    showSkeleton,
     error,
     cacheAge,
     offline,

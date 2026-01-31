@@ -1,5 +1,6 @@
 import { useWeather } from '../hooks/useWeather'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
+import { WeatherSkeleton } from './WeatherSkeleton'
 
 interface WeatherDisplayProps {
   /** Latitude coordinate */
@@ -38,7 +39,7 @@ function formatCacheAge(seconds: number): string {
  * - Uses semantic HTML and ARIA labels
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
-  const { weather, loading, refreshing, error, cacheAge, offline, retry } = useWeather(lat, lon)
+  const { weather, loading, refreshing, showSkeleton, error, cacheAge, offline, retry } = useWeather(lat, lon)
 
   // Compute adaptive text colors for WCAG AA compliance
   const { classes: textColors } = useAdaptiveTextColors(
@@ -47,6 +48,18 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
     weather?.isDay ?? null
   )
 
+  // Show skeleton after 1 second of loading (instead of simple emoji)
+  if (showSkeleton) {
+    return (
+      <WeatherSkeleton
+        temperature={weather?.temperature ?? null}
+        weatherCode={weather?.weatherCode ?? null}
+        isDay={weather?.isDay ?? null}
+      />
+    )
+  }
+
+  // Show initial loading state for the first second (calm pulse animation)
   if (loading) {
     return (
       <section aria-live="polite" aria-busy="true" aria-label="Loading weather data" className="flex flex-col items-center justify-center py-16 space-y-4">
@@ -57,7 +70,9 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
     )
   }
 
-  if (error) {
+  // Show error screen only if we have no cached data to display
+  // If we have cached data (offline mode), we'll show it below with an offline indicator
+  if (error && !weather) {
     return (
       <section role="alert" aria-labelledby="weather-error-title" className="flex flex-col items-center justify-center py-16 space-y-4 px-4">
         <div className="text-6xl" role="img" aria-label="Error">⚠️</div>
@@ -80,8 +95,34 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
     return null
   }
 
+  // If we have an error but also have cached weather data, show the weather
+  // with a prominent offline indicator at the top
+
   return (
     <section aria-label="Current weather" className="flex flex-col items-center space-y-6 py-8">
+      {/* Offline indicator banner - shown when using cached data due to API error */}
+      {error && offline && (
+        <div className="w-full max-w-sm mx-auto px-4">
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-orange-100 border border-orange-300 rounded-lg px-4 py-3 flex items-start space-x-3"
+          >
+            <span className="text-2xl flex-shrink-0" role="img" aria-label="Offline indicator">
+              📡
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-orange-900">
+                Using cached data
+              </p>
+              <p className="text-xs text-orange-700 mt-1">
+                {error}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Location name */}
       {locationName && (
         <div className="text-center">
