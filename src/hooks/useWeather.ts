@@ -112,8 +112,8 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
       setCacheAge(0) // Fresh data
       setOffline(false) // Successfully fetched fresh data, not offline
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch weather data'
+      // Extract user-friendly message from Error if available
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch weather data'
 
       // Check if we have cached data to fall back to
       const cached = loadWeatherData(latitude, longitude)
