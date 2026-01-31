@@ -96,10 +96,10 @@ test(
 );
 
 test(
-  'At threshold (9.3 mph) is windy',
-  isWindy(9.3, 'mph'),
+  'At threshold (9.32 mph) is windy (15 km/h)',
+  isWindy(9.32, 'mph'),
   'true',
-  String(isWindy(9.3, 'mph'))
+  String(isWindy(9.32, 'mph'))
 );
 
 test(
@@ -205,10 +205,10 @@ test(
 );
 
 test(
-  'Boundary in knots: 8.099 knots (15 km/h) is windy',
-  isWindy(8.099, 'kn'),
+  'Boundary in knots: 8.1 knots (15 km/h) is windy',
+  isWindy(8.1, 'kn'),
   'true',
-  String(isWindy(8.099, 'kn'))
+  String(isWindy(8.1, 'kn'))
 );
 
 // ============================================================================

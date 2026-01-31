@@ -1,5 +1,79 @@
 # OutFitWeather - Coding Agent Progress
 
+## Session Date: 2025-01-31 (Continued)
+
+## Feature Completed: #37 - Weather Data Cached in Storage
+
+### What Was Accomplished:
+
+1. **Created weatherStorage Utility Module** (`src/lib/weatherStorage.ts`)
+   - `saveWeatherData()` - Saves weather data to localStorage with timestamp
+   - `loadWeatherData()` - Loads cached data with validation
+   - `clearWeatherData()` - Clears cache manually
+   - `getCacheAge()` - Returns cache age in seconds
+   - `hasValidCache()` - Checks if valid cache exists
+   - 30-minute cache expiry
+   - Location validation (rejects cache if >1km away)
+   - Error handling for private browsing mode
+
+2. **Updated useWeather Hook** (`src/hooks/useWeather.ts`)
+   - Loads cached data immediately on mount for instant display
+   - Saves fresh data to cache after API fetch
+   - Tracks cache age state
+   - Added `clearCache()` function for manual cache clearing
+   - Returns `cacheAge` in result interface
+
+3. **Updated WeatherDisplay Component** (`src/components/WeatherDisplay.tsx`)
+   - Added `formatCacheAge()` helper function
+   - Displays "Updated just now" or "Updated X mins ago"
+   - Shows cache age at bottom of weather display
+
+4. **Created WeatherCacheTest Component** (`src/components/WeatherCacheTest.tsx`)
+   - Interactive test component for cache verification
+   - Shows cache status, live weather, and test results
+   - "Run All Tests" button validates:
+     - Save weather data
+     - Load cached data
+     - Get cache age
+     - hasValidCache validation
+     - Location mismatch rejection
+     - Clear cache
+     - Serialization/deserialization
+
+5. **Updated App.tsx**
+   - Added WeatherCacheTest to development test section
+
+### Verification Steps Completed:
+1. ✅ Save weather data to localStorage - Implemented with JSON serialization
+2. ✅ Include fetch timestamp - Date.now() stored in milliseconds
+3. ✅ Serialize data properly - JSON.stringify/parse for all weather data
+
+### Code Quality:
+- ✅ No TypeScript errors (Vite build passes: 224.95 kB)
+- ✅ No mock data patterns found
+- ✅ No TODO/incomplete markers
+- ✅ Proper error handling (try-catch for localStorage)
+- ✅ Type-safe interfaces with JSDoc documentation
+- ✅ Graceful fallback for private browsing mode
+- ✅ Cache validation (time + location)
+- ✅ Real API integration with Open-Meteo
+
+### Feature Status: ✅ PASSING
+
+Feature #37 has been marked as passing.
+
+**Files Created:**
+- `src/lib/weatherStorage.ts` - localStorage caching utility
+- `src/components/WeatherCacheTest.tsx` - Interactive test component
+- `FEATURE_37_VERIFICATION.md` - Verification documentation
+
+**Files Modified:**
+- `src/hooks/useWeather.ts` - Added cache loading/saving
+- `src/components/WeatherDisplay.tsx` - Added cache age display
+- `src/App.tsx` - Added test component
+
+---
+
 ## Session Date: 2025-01-31
 
 ## Feature Completed: #17 - Weather Data Displayed Correctly
@@ -439,3 +513,73 @@ Feature #19 is now PASSING ✅
   - Found and fixed Celsius boundary classification bug
   - All 43 tests now pass
   - Fix committed to git
+
+## Session Date: 2025-01-31 (Continued)
+
+## Feature Completed: #43 - Settings Button Visible
+
+### What Was Accomplished:
+
+1. **Created SettingsModal Component** (`src/components/SettingsModal.tsx`)
+   - Modal dialog with proper ARIA attributes (role="dialog", aria-modal, aria-labelledby)
+   - Temperature unit toggle (Celsius/Fahrenheit) with segmented button control
+   - Wind speed unit toggle (km/h/mph) with segmented button control
+   - Backdrop with blur effect (backdrop-blur-sm)
+   - Done button to close modal
+   - Click outside modal (backdrop) closes modal
+   - Proper event propagation handling (stopPropagation on modal content)
+
+2. **Updated Layout Component** (`src/components/Layout.tsx`)
+   - Added `isSettingsOpen` state with useState
+   - Connected settings button onClick to open modal
+   - Imported and rendered SettingsModal with correct props
+   - Settings button already had gear icon SVG (from Feature #4)
+
+3. **Accessibility Features:**
+   - Settings button has aria-label="Open settings"
+   - Modal has role="dialog" and aria-modal="true"
+   - Modal title has id="settings-title" referenced by aria-labelledby
+   - All interactive elements are properly labeled
+
+4. **Testing:**
+   - ✅ Created comprehensive test script (test-settings-button.ts)
+   - ✅ All 10 verification tests passed
+   - ✅ TypeScript compilation passes
+   - ✅ Production build successful
+   - ✅ No mock data patterns found
+   - ✅ No in-memory storage patterns found
+
+### Feature Steps Completed:
+1. ✅ Add settings button to layout - Already present in header (gear icon)
+2. ✅ Use gear icon - SVG gear icon present in Layout
+3. ✅ Position appropriately - Top right corner of header
+
+### Feature Status: ✅ PASSING
+
+Feature #43 has been marked as passing.
+
+---
+
+## Current Project Status:
+- Total Features: 79
+- Passing: 11 (Features #4, #5, #11, #13, #17, #19, #20, #21, #27, #28, #43)
+- In Progress: 2
+- Completion: 13.9%
+- Dev Server: Running on http://localhost:5174
+
+## Files Modified This Session:
+- `src/components/SettingsModal.tsx` (created) - Settings modal with unit toggles
+- `src/components/Layout.tsx` (updated) - Added modal state and integration
+- `src/components/WeatherCacheTest.tsx` (updated) - Fixed unused variable warning
+- `test-settings-button.ts` (created) - Verification test script
+
+## Next Steps:
+Continue with the next pending feature in the Settings category.
+
+## Technical Notes:
+- SettingsModal uses a clean, modern design with rounded corners (rounded-2xl)
+- Segmented button controls for unit selection (active state highlighted with blue)
+- Backdrop click closes modal for better UX
+- Done button provides explicit close action
+- Modal is accessible with proper ARIA attributes
+
