@@ -30,7 +30,7 @@ function formatCacheAge(seconds: number): string {
  * Caching behavior:
  * - Shows cached data immediately if available
  * - Displays subtle loading indicator when refreshing in background
- * - Shows full loading spinner only when no cached data exists
+ * - Shows full loading indicator (calm pulse animation) only when no cached data exists
  */
 export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
   const { weather, loading, refreshing, error, cacheAge, retry } = useWeather(lat, lon)

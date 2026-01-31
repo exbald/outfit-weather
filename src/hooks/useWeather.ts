@@ -27,6 +27,7 @@ export interface UseWeatherResult {
   refreshing: boolean // true when we have cached data but are fetching fresh data
   error: string | null
   cacheAge: number // Age of cached data in seconds (-1 if no cache)
+  offline: boolean // true when showing cached data due to network failure
   fetchWeather: (lat: number, lon: number) => Promise<void>
   retry: () => void
   clearCache: () => void
@@ -51,6 +52,7 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [refreshing, setRefreshing] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number>(-1)
+  const [offline, setOffline] = useState<boolean>(false)
   const [lastCoords, setLastCoords] = useState<{ lat: number; lon: number } | null>(
     lat && lon ? { lat, lon } : null
   )
