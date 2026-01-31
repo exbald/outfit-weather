@@ -20,7 +20,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       aria-labelledby="settings-title"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Modal */}
       <div
@@ -28,20 +28,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100">
+        <header className="px-6 py-4 border-b border-gray-100">
           <h2 id="settings-title" className="text-xl font-bold text-gray-800">
             Settings
           </h2>
-        </div>
+        </header>
 
         {/* Settings Options */}
-        <div className="p-6 space-y-6">
+        <section className="p-6 space-y-6" aria-label="Settings options">
           {/* Temperature Unit */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Temperature Unit
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="group" aria-label="Temperature unit selection">
               <button
                 type="button"
                 onClick={() => setTempUnit('C')}
@@ -50,6 +50,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                aria-pressed={tempUnit === 'C'}
               >
                 Celsius (°C)
               </button>
@@ -61,6 +62,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                aria-pressed={tempUnit === 'F'}
               >
                 Fahrenheit (°F)
               </button>
@@ -72,7 +74,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Wind Speed Unit
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-2" role="group" aria-label="Wind speed unit selection">
               <button
                 type="button"
                 onClick={() => setWindUnit('kmh')}
@@ -81,6 +83,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                aria-pressed={windUnit === 'kmh'}
               >
                 km/h
               </button>
@@ -92,15 +95,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                aria-pressed={windUnit === 'mph'}
               >
                 mph
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+        <footer className="px-6 py-4 bg-gray-50 border-t border-gray-100">
           <button
             type="button"
             onClick={onClose}
@@ -108,7 +112,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           >
             Done
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   )

@@ -7,26 +7,29 @@ import { WeatherModifierTest } from './components/WeatherModifierTest'
 import { WeatherCacheTest } from './components/WeatherCacheTest'
 import { WindModifierTest } from './components/WindModifierTest'
 import { ServiceWorkerTest } from './components/ServiceWorkerTest'
+import { InstallButton } from './components/InstallButton'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useAdaptiveBackground } from './hooks/useAdaptiveBackground'
+import { useAdaptiveTextColors } from './hooks/useAdaptiveTextColors'
 import { useWeather } from './hooks/useWeather'
+import { usePwaInstall } from './hooks/usePwaInstall'
 
 /**
  * Location permission prompt screen component
  * Shown before requesting geolocation to explain why location is needed
  */
-function LocationPermissionPrompt({ onAllow }: { onAllow: () => void }) {
+function LocationPermissionPrompt({ onAllow, textColors }: { onAllow: () => void; textColors: ReturnType<typeof useAdaptiveTextColors>['classes'] }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
-      <div className="text-6xl">📍</div>
+    <section aria-labelledby="permission-title" className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
+      <div className="text-6xl" role="img" aria-label="Location icon">📍</div>
       <div className="text-center max-w-md">
-        <h2 className="text-xl font-semibold text-gray-800 mb-3">
+        <h2 id="permission-title" className={`text-xl font-semibold ${textColors.primary} mb-3`}>
           Enable Location Access
         </h2>
-        <p className="text-gray-600 mb-2">
+        <p className={`${textColors.secondary} mb-2`}>
           OutFitWeather needs your location to show accurate weather and outfit recommendations for your area.
         </p>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className={`text-sm ${textColors.muted} mb-6`}>
           Your location is only used to fetch weather data and is never stored or shared.
         </p>
         <button
@@ -37,7 +40,7 @@ function LocationPermissionPrompt({ onAllow }: { onAllow: () => void }) {
           Allow Location Access
         </button>
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -45,18 +48,18 @@ function LocationPermissionPrompt({ onAllow }: { onAllow: () => void }) {
  * Location permission denied screen component
  * Shown when user denies location access
  */
-function LocationPermissionDenied({ onRetry }: { onRetry: () => void }) {
+function LocationPermissionDenied({ onRetry, textColors }: { onRetry: () => void; textColors: ReturnType<typeof useAdaptiveTextColors>['classes'] }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
-      <div className="text-6xl">📍</div>
+    <section role="alert" aria-labelledby="permission-denied-title" className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
+      <div className="text-6xl" role="img" aria-label="Location icon">📍</div>
       <div className="text-center max-w-md">
-        <h2 className="text-xl font-semibold text-gray-800 mb-3">
+        <h2 id="permission-denied-title" className={`text-xl font-semibold ${textColors.primary} mb-3`}>
           We need your location
         </h2>
-        <p className="text-gray-600 mb-2">
+        <p className={`${textColors.secondary} mb-2`}>
           OutFitWeather uses your location to show accurate weather and outfit recommendations.
         </p>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className={`text-sm ${textColors.muted} mb-6`}>
           Your location is only used to fetch weather data and is never stored or shared.
         </p>
         <div className="space-y-3">
@@ -67,29 +70,30 @@ function LocationPermissionDenied({ onRetry }: { onRetry: () => void }) {
           >
             Try Again
           </button>
-          <p className="text-xs text-gray-500">
+          <p className={`text-xs ${textColors.muted}`}>
             To enable location: Open your browser settings and allow location access for this site.
           </p>
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 
 /**
  * Loading screen shown while fetching location
  */
-function LocationLoading() {
+function LocationLoading({ textColors }: { textColors: ReturnType<typeof useAdaptiveTextColors>['classes'] }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 space-y-4">
-      <div className="text-6xl animate-pulse">📍</div>
-      <p className="text-gray-600 text-lg">Finding your location...</p>
-    </div>
+    <section aria-live="polite" aria-busy="true" aria-label="Finding your location" className="flex flex-col items-center justify-center py-16 space-y-4">
+      <div className="text-6xl animate-pulse" role="img" aria-label="Loading location">📍</div>
+      <p className={`${textColors.secondary} text-lg`}>Finding your location...</p>
+    </section>
   )
 }
 
 function App() {
   const { position, error: locationError, loading: locationLoading, requestLocation, permissionShown, grantPermission } = useGeolocation()
+  const { isInstallable, promptInstall } = usePwaInstall()
   const [weatherForBackground, setWeatherForBackground] = useState<{
     temperature: number
     weatherCode: number
@@ -118,14 +122,21 @@ function App() {
     weatherForBackground?.isDay ?? null
   )
 
+  // Compute adaptive text colors for WCAG AA compliance
+  const { classes: textColors } = useAdaptiveTextColors(
+    weatherForBackground?.temperature ?? null,
+    weatherForBackground?.weatherCode ?? null,
+    weatherForBackground?.isDay ?? null
+  )
+
   // Show permission prompt before requesting location
   if (permissionShown) {
     return (
       <div style={backgroundStyle}>
         <Layout>
-          <LocationPermissionPrompt onAllow={grantPermission} />
-          <div className="border-t border-gray-200 pt-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+          <LocationPermissionPrompt onAllow={grantPermission} textColors={textColors} />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
             <div className="space-y-8">
               <ServiceWorkerTest />
               <WeatherCacheTest />
@@ -134,7 +145,7 @@ function App() {
               <WeatherModifierTest />
               <WindModifierTest />
             </div>
-          </div>
+          </section>
         </Layout>
       </div>
     )
@@ -145,9 +156,9 @@ function App() {
     return (
       <div style={backgroundStyle}>
         <Layout>
-          <LocationLoading />
-          <div className="border-t border-gray-200 pt-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+          <LocationLoading textColors={textColors} />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
             <div className="space-y-8">
               <ServiceWorkerTest />
               <WeatherCacheTest />
@@ -156,8 +167,9 @@ function App() {
               <WeatherModifierTest />
               <WindModifierTest />
             </div>
-          </div>
+          </section>
         </Layout>
+        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
       </div>
     )
   }
@@ -167,9 +179,9 @@ function App() {
     return (
       <div style={backgroundStyle}>
         <Layout>
-          <LocationPermissionDenied onRetry={requestLocation} />
-          <div className="border-t border-gray-200 pt-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+          <LocationPermissionDenied onRetry={requestLocation} textColors={textColors} />
+          <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+            <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
             <div className="space-y-8">
               <ServiceWorkerTest />
               <WeatherCacheTest />
@@ -178,8 +190,9 @@ function App() {
               <WeatherModifierTest />
               <WindModifierTest />
             </div>
-          </div>
+          </section>
         </Layout>
+        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
       </div>
     )
   }
@@ -197,8 +210,8 @@ function App() {
             />
 
             {/* Test components for development */}
-            <div className="border-t border-gray-200 pt-8">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">Development Tests</h2>
+            <section aria-labelledby="dev-tests-title" className="border-t border-black/5 pt-8">
+              <h2 id="dev-tests-title" className={`text-lg font-semibold ${textColors.secondary} mb-4`}>Development Tests</h2>
               <div className="space-y-8">
                 <WeatherCacheTest />
                 <OutfitEmojiTest />
@@ -206,9 +219,10 @@ function App() {
                 <WeatherModifierTest />
                 <WindModifierTest />
               </div>
-            </div>
+            </section>
           </div>
         </Layout>
+        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
       </div>
     )
   }

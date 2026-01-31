@@ -37,20 +37,20 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4">
+      <section aria-live="polite" aria-busy="true" aria-label="Loading weather data" className="flex flex-col items-center justify-center py-16 space-y-4">
         {/* Animated weather emoji loading indicator */}
-        <div className="text-6xl animate-pulse">🌤️</div>
+        <div className="text-6xl animate-pulse" role="img" aria-label="Loading weather">🌤️</div>
         <p className="text-gray-600 text-lg">Fetching weather data...</p>
-      </div>
+      </section>
     )
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4 px-4">
-        <div className="text-6xl">⚠️</div>
+      <section role="alert" aria-labelledby="weather-error-title" className="flex flex-col items-center justify-center py-16 space-y-4 px-4">
+        <div className="text-6xl" role="img" aria-label="Error">⚠️</div>
         <div className="text-center max-w-md">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Couldn't fetch weather</h2>
+          <h2 id="weather-error-title" className="text-xl font-semibold text-gray-800 mb-2">Couldn't fetch weather</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={retry}
@@ -60,7 +60,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
             Retry
           </button>
         </div>
-      </div>
+      </section>
     )
   }
 
@@ -69,7 +69,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 py-8">
+    <section aria-label="Current weather" className="flex flex-col items-center space-y-6 py-8">
       {/* Location name */}
       {locationName && (
         <div className="text-center">
@@ -83,19 +83,19 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
       </div>
 
       {/* Current temperature - prominent display */}
-      <div className="text-center">
+      <section aria-label="Temperature">
         <p className="text-7xl font-bold text-gray-900 tracking-tight">
           {Math.round(weather.temperature)}°
         </p>
-      </div>
+      </section>
 
       {/* Weather condition text */}
-      <div className="text-center">
+      <section aria-label="Weather condition">
         <p className="text-xl text-gray-700">{weather.condition}</p>
-      </div>
+      </section>
 
       {/* Additional info - wind speed */}
-      <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+      <section aria-label="Weather details" className="flex items-center justify-center space-x-4 text-sm text-gray-600">
         <div className="flex items-center space-x-1">
           <span className="text-lg" role="img" aria-label="Wind">
             💨
@@ -117,16 +117,16 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
             <span>Night</span>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Location coordinates (small, subtle) */}
       {!locationName && (
-        <div className="text-center">
+        <section aria-label="Location coordinates" className="text-center">
           <p className="text-xs text-gray-500">
             {weather.location.latitude.toFixed(4)}°, {weather.location.longitude.toFixed(4)}°
           </p>
           <p className="text-xs text-gray-400">{weather.location.timezone}</p>
-        </div>
+        </section>
       )}
 
       {/* Cache age timestamp */}
@@ -136,6 +136,6 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
           {refreshing ? 'Updating...' : offline ? `Offline · ${formatCacheAge(cacheAge)}` : formatCacheAge(cacheAge)}
         </p>
       </div>
-    </div>
+    </section>
   )
 }
