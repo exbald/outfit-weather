@@ -1,11 +1,11 @@
 /**
  * Weather-based gradient color palettes
- * Maps temperature buckets and weather conditions to animated gradient colors
+ * Maps temperature buckets and weather conditions to gradient colors
  */
 
 import { useMemo } from 'react'
 import { getTemperatureBucket, type TemperatureBucket, isRainWeather, isSnowWeather } from '../lib/outfitLogic'
-import type { GradientColors } from '../components/ui/background-gradient-animation'
+import type { GradientColors } from '../components/ui/background-gradient'
 
 /**
  * Color palettes for each temperature bucket
@@ -249,6 +249,34 @@ const SNOW_DARK: GradientPalette = {
 }
 
 /**
+ * Neutral loading palette - shown before weather data loads
+ * Uses neutral gray tones that don't suggest any particular weather
+ */
+const LOADING_PALETTE_LIGHT: GradientPalette = {
+  name: 'Loading',
+  gradientBackgroundStart: 'rgb(241, 245, 249)',
+  gradientBackgroundEnd: 'rgb(226, 232, 240)',
+  firstColor: '241, 245, 249',
+  secondColor: '226, 232, 240',
+  thirdColor: '203, 213, 225',
+  fourthColor: '148, 163, 184',
+  fifthColor: '248, 250, 252',
+  pointerColor: '203, 213, 225',
+}
+
+const LOADING_PALETTE_DARK: GradientPalette = {
+  name: 'Loading Dark',
+  gradientBackgroundStart: 'rgb(30, 41, 59)',
+  gradientBackgroundEnd: 'rgb(51, 65, 85)',
+  firstColor: '30, 41, 59',
+  secondColor: '51, 65, 85',
+  thirdColor: '71, 85, 105',
+  fourthColor: '100, 116, 139',
+  fifthColor: '15, 23, 42',
+  pointerColor: '100, 116, 139',
+}
+
+/**
  * Hook to get gradient colors based on weather conditions
  *
  * @param temperature - Current temperature
@@ -256,7 +284,7 @@ const SNOW_DARK: GradientPalette = {
  * @param isDay - 1 for daytime, 0 for nighttime
  * @param unit - Temperature unit ('C' or 'F')
  * @param isDarkMode - Whether dark mode is enabled
- * @returns Gradient colors for the BackgroundGradientAnimation component
+ * @returns Gradient colors for the BackgroundGradient component
  */
 export function useWeatherGradient(
   temperature: number | null,
@@ -266,9 +294,9 @@ export function useWeatherGradient(
   isDarkMode: boolean = false
 ): GradientColors {
   return useMemo(() => {
-    // Default palette when no weather data
+    // Neutral loading palette when no weather data (gray, not green)
     if (temperature === null || weatherCode === null) {
-      return isDarkMode ? DARK_MODE_PALETTES.mild : LIGHT_MODE_PALETTES.mild
+      return isDarkMode ? LOADING_PALETTE_DARK : LOADING_PALETTE_LIGHT
     }
 
     // Determine if we should use dark colors

@@ -3,7 +3,7 @@ import { Layout } from './components/Layout'
 import { WeatherDisplay } from './components/WeatherDisplay'
 import { DevTests } from './components/DevTests'
 import { InstallButton } from './components/InstallButton'
-import { BackgroundGradientAnimation } from './components/ui/background-gradient-animation'
+import { BackgroundGradient } from './components/ui/background-gradient'
 import { useGeolocation } from './hooks/useGeolocation'
 import { useAdaptiveTextColors } from './hooks/useAdaptiveTextColors'
 import { useWeatherGradient } from './hooks/useWeatherGradient'
@@ -365,7 +365,7 @@ function App() {
     })
   }
 
-  // Compute adaptive gradient colors for animated background
+  // Compute adaptive gradient colors for background
   const gradientColors = useWeatherGradient(
     weatherForBackground?.temperature ?? null,
     weatherForBackground?.weatherCode ?? null,
@@ -386,7 +386,7 @@ function App() {
   // Show manual location entry form
   if (showManualEntry) {
     return (
-      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
+      <BackgroundGradient {...gradientColors}>
         <Layout>
           <ManualLocationEntry
             onSubmit={handleManualLocationSubmit}
@@ -395,32 +395,32 @@ function App() {
           />
           <DevTests />
         </Layout>
-      </BackgroundGradientAnimation>
+      </BackgroundGradient>
     )
   }
 
   // Show permission prompt before requesting location
   if (permissionShown) {
     return (
-      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
+      <BackgroundGradient {...gradientColors}>
         <Layout>
           <LocationPermissionPrompt onAllow={grantPermission} textColors={textColors} />
           <DevTests />
         </Layout>
-      </BackgroundGradientAnimation>
+      </BackgroundGradient>
     )
   }
 
   // Handle location loading state
   if (locationLoading) {
     return (
-      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
+      <BackgroundGradient {...gradientColors}>
         <Layout>
           <LocationLoading textColors={textColors} />
           <DevTests />
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-      </BackgroundGradientAnimation>
+      </BackgroundGradient>
     )
   }
 
@@ -429,20 +429,20 @@ function App() {
     // Error code 3 = timeout, show timeout-specific screen
     if (locationError.code === 3) {
       return (
-        <BackgroundGradientAnimation {...gradientColors} interactive={false}>
+        <BackgroundGradient {...gradientColors}>
           <Layout>
             <LocationTimeout onRetry={requestLocation} textColors={textColors} />
             <DevTests />
           </Layout>
           <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-        </BackgroundGradientAnimation>
+        </BackgroundGradient>
       )
     }
 
     // Error code 1 = permission denied, show permission-specific screen
     // Error code 2 = position unavailable, show generic error screen
     return (
-      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
+      <BackgroundGradient {...gradientColors}>
         <Layout>
           <LocationPermissionDenied
             onRetry={requestLocation}
@@ -452,7 +452,7 @@ function App() {
           <DevTests />
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-      </BackgroundGradientAnimation>
+      </BackgroundGradient>
     )
   }
 
@@ -460,7 +460,7 @@ function App() {
   const positionForDisplay = position || manualLocation
   if (positionForDisplay) {
     return (
-      <BackgroundGradientAnimation {...gradientColors} interactive={true}>
+      <BackgroundGradient {...gradientColors}>
         <Layout
           dayOutfits={dayOutfits}
           temperature={bgWeather?.temperature}
@@ -484,7 +484,7 @@ function App() {
           </div>
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-      </BackgroundGradientAnimation>
+      </BackgroundGradient>
     )
   }
 
