@@ -1,10 +1,49 @@
-.agent.lock
-*.log
-features.db-shm
-features.db-wal
-features.db-journal
+# Dependencies
+node_modules/
+
+# Build output
+dist/
 
 # Environment files (contain secrets)
 .env
 .env.local
 .env.*.local
+
+# Logs
+*.log
+
+# Development artifacts
+.agent.lock
+.autocoder/
+.claude_settings.json
+.initializer-*.md
+features.db*
+
+# AI session files
+FEATURE*.md
+FEATURE*.txt
+claude-*.md
+claude-*.txt
+SESSION*.md
+REGRESSION*.md
+
+# Test artifacts (keep src/__tests__/)
+test-*.ts
+test-*.js
+test-*.html
+test-*.cjs
+test-*.mjs
+verify-*.ts
+verify-*.js
+verify-*.md
+verify-*.html
+verify-*.sh
+test-results/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

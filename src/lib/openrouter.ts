@@ -75,21 +75,29 @@ function buildSystemPrompt(): string {
   return `You are an outfit recommendation assistant. Based on weather conditions, suggest appropriate clothing.
 
 Your response MUST be valid JSON with exactly two fields:
-1. "emojis": A string of 4-6 clothing emojis (e.g., "🧥👕👖👟")
+1. "emojis": A string of 4-6 UNIQUE clothing emojis (e.g., "🧥👕👖👟")
 2. "oneLiner": A short, friendly message about the outfit (max 60 chars)
 
-Emoji guidelines:
-- Cold: Include 🧥 (coat), 🧣 (scarf), 🧤 (gloves), 🥾 (boots)
-- Mild: Include 🧥 (light jacket), 👕 (shirt), 👖 (pants), 👟 (sneakers)
-- Warm: Include 👕 (shirt), 👖 (pants), 👟 (sneakers)
-- Hot: Include 👕 (t-shirt), 🩳 (shorts), 👟 (sneakers), 🧢 (cap)
-- Rain: Add ☂️ (umbrella)
-- Snow: Add 🧣 (scarf), 🧤 (gloves)
-- Sunny/High UV: Add 🕶️ (sunglasses), 🧢 (hat)
-- Windy: Add 🧥 (windbreaker)
+CRITICAL: Never repeat the same emoji twice in the emojis string. Each emoji must appear exactly once.
+
+Base outfit by temperature (pick ONE set):
+- Freezing/Cold (below 10°C): 🧥👕👖🥾 (coat, shirt, pants, boots)
+- Cool (10-18°C): 🧥👕👖👟 (light jacket, shirt, pants, sneakers)
+- Mild (18-22°C): 👕👖👟 (shirt, pants, sneakers)
+- Warm (22-27°C): 👕👖👟 (shirt, pants, sneakers)
+- Hot (above 27°C): 👕🩳👟 (t-shirt, shorts, sneakers)
+
+Conditional modifiers (add IF needed AND not already in outfit):
+- Rain/precipitation >30%: Add ☂️ (umbrella)
+- Snow: Add 🧣 (scarf) if not present, 🧤 (gloves) if not present
+- UV ≥3 (daytime): Add 🕶️ (sunglasses)
+- UV ≥6 (daytime): Add 🧢 (hat/cap) if not already in outfit
+- Wind ≥15 km/h + cool/mild temps: Ensure 🧥 (jacket) is present
+
+IMPORTANT: Count your emojis - use 4-6 total, each unique.
 
 One-liner guidelines:
-- Keep it short and friendly
+- Keep it short and friendly (max 60 chars)
 - Reference the weather condition naturally
 - Be encouraging and helpful
 - Vary your responses - don't be repetitive`
@@ -148,6 +156,30 @@ What should I wear right now?`
 }
 
 /**
+ * Deduplicate emojis in a string while preserving order
+ * @param emojis - String of emojis that may contain duplicates
+ * @returns String with unique emojis only
+ */
+function deduplicateEmojis(emojis: string): string {
+  // Use Array.from to properly handle multi-codepoint emojis
+  const emojiArray = Array.from(emojis)
+  const seen = new Set<string>()
+  const unique: string[] = []
+
+  for (const emoji of emojiArray) {
+    // Skip whitespace
+    if (emoji.trim() === '') continue
+
+    if (!seen.has(emoji)) {
+      seen.add(emoji)
+      unique.push(emoji)
+    }
+  }
+
+  return unique.join('')
+}
+
+/**
  * Parse and validate AI response
  * @param content - Raw response content from AI
  * @returns Parsed AIOutfitResponse or null if invalid
@@ -176,13 +208,16 @@ function parseAIResponse(content: string): AIOutfitResponse | null {
       return null
     }
 
+    // Deduplicate emojis (safety net in case AI returns duplicates)
+    const emojis = deduplicateEmojis(parsed.emojis)
+
     // Truncate oneLiner if too long
     const oneLiner = parsed.oneLiner.length > 80
       ? parsed.oneLiner.substring(0, 77) + '...'
       : parsed.oneLiner
 
     return {
-      emojis: parsed.emojis,
+      emojis,
       oneLiner
     }
   } catch (error) {

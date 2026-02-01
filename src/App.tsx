@@ -3,9 +3,10 @@ import { Layout } from './components/Layout'
 import { WeatherDisplay } from './components/WeatherDisplay'
 import { DevTests } from './components/DevTests'
 import { InstallButton } from './components/InstallButton'
+import { BackgroundGradientAnimation } from './components/ui/background-gradient-animation'
 import { useGeolocation } from './hooks/useGeolocation'
-import { useAdaptiveBackground } from './hooks/useAdaptiveBackground'
 import { useAdaptiveTextColors } from './hooks/useAdaptiveTextColors'
+import { useWeatherGradient } from './hooks/useWeatherGradient'
 import { useWeather } from './hooks/useWeather'
 import { useOutfit, type OutfitRecommendation } from './hooks/useOutfit'
 import { useAIOutfit } from './hooks/useAIOutfit'
@@ -364,8 +365,8 @@ function App() {
     })
   }
 
-  // Compute adaptive background
-  const { backgroundStyle } = useAdaptiveBackground(
+  // Compute adaptive gradient colors for animated background
+  const gradientColors = useWeatherGradient(
     weatherForBackground?.temperature ?? null,
     weatherForBackground?.weatherCode ?? null,
     weatherForBackground?.isDay ?? null,
@@ -385,7 +386,7 @@ function App() {
   // Show manual location entry form
   if (showManualEntry) {
     return (
-      <div style={backgroundStyle}>
+      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
         <Layout>
           <ManualLocationEntry
             onSubmit={handleManualLocationSubmit}
@@ -394,32 +395,32 @@ function App() {
           />
           <DevTests />
         </Layout>
-      </div>
+      </BackgroundGradientAnimation>
     )
   }
 
   // Show permission prompt before requesting location
   if (permissionShown) {
     return (
-      <div style={backgroundStyle}>
+      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
         <Layout>
           <LocationPermissionPrompt onAllow={grantPermission} textColors={textColors} />
           <DevTests />
         </Layout>
-      </div>
+      </BackgroundGradientAnimation>
     )
   }
 
   // Handle location loading state
   if (locationLoading) {
     return (
-      <div style={backgroundStyle}>
+      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
         <Layout>
           <LocationLoading textColors={textColors} />
           <DevTests />
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-      </div>
+      </BackgroundGradientAnimation>
     )
   }
 
@@ -428,20 +429,20 @@ function App() {
     // Error code 3 = timeout, show timeout-specific screen
     if (locationError.code === 3) {
       return (
-        <div style={backgroundStyle}>
+        <BackgroundGradientAnimation {...gradientColors} interactive={false}>
           <Layout>
             <LocationTimeout onRetry={requestLocation} textColors={textColors} />
             <DevTests />
           </Layout>
           <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-        </div>
+        </BackgroundGradientAnimation>
       )
     }
 
     // Error code 1 = permission denied, show permission-specific screen
     // Error code 2 = position unavailable, show generic error screen
     return (
-      <div style={backgroundStyle}>
+      <BackgroundGradientAnimation {...gradientColors} interactive={false}>
         <Layout>
           <LocationPermissionDenied
             onRetry={requestLocation}
@@ -451,7 +452,7 @@ function App() {
           <DevTests />
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-      </div>
+      </BackgroundGradientAnimation>
     )
   }
 
@@ -459,7 +460,7 @@ function App() {
   const positionForDisplay = position || manualLocation
   if (positionForDisplay) {
     return (
-      <div style={backgroundStyle}>
+      <BackgroundGradientAnimation {...gradientColors} interactive={true}>
         <Layout
           dayOutfits={dayOutfits}
           temperature={bgWeather?.temperature}
@@ -483,7 +484,7 @@ function App() {
           </div>
         </Layout>
         <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
-      </div>
+      </BackgroundGradientAnimation>
     )
   }
 
