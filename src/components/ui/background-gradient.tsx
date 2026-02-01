@@ -32,15 +32,15 @@ export const BackgroundGradient = ({
   return (
     <div
       className={cn(
-        "h-full w-full fixed inset-0 overflow-hidden",
-        "transition-all duration-1000 ease-in-out",
+        "min-h-screen w-full",
+        "transition-colors duration-1000 ease-in-out",
         containerClassName
       )}
       style={{
         background: `linear-gradient(135deg, ${gradientBackgroundStart} 0%, ${gradientBackgroundEnd} 100%)`,
       }}
     >
-      <div className={cn("relative z-10", className)}>{children}</div>
+      <div className={cn("min-h-screen", className)}>{children}</div>
     </div>
   )
 }
