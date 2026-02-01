@@ -987,3 +987,54 @@ PROGRESS: 75/79 features passing (94.9% complete)
 COMPLETION INCREASED: +1 feature (from 74 to 75)
 
 **Feature #47 Status: COMPLETE ✅**
+
+--- External Feature Registration Session: 2026-02-01 ---
+
+PURPOSE: Register features developed outside of AutoCoder sessions into the AutoCoder
+tracking system for project completeness awareness.
+
+REGISTERED FEATURES:
+
+Feature #80: Coat Emoji Branding (Branding category - NEW)
+- Status: PASSING ✅
+- Source: Commit 1d8abdb7
+- Implementation:
+  * Replaced sun icon with 🧥 coat emoji as app icon
+  * Updated theme color to amber (#f59e0b)
+  * Added coat emoji to app header and settings modal
+  * Created generate-icons.html for PNG icon generation
+  * Updated InstallButton branding
+
+Feature #81: Theme Preference Toggle (Settings category)
+- Status: PASSING ✅
+- Source: Commit 1d8abdb7
+- Implementation:
+  * Added ThemePreference type: 'light' | 'dark' | 'system'
+  * Added theme toggle UI in SettingsModal
+  * Updated useDarkMode hook to respect theme preference
+  * Applied dark class to document for Tailwind dark: variants
+  * Full dark mode support throughout app
+
+Feature #82: AI-Powered Outfit Recommendations (AI Integration category - NEW)
+- Status: PASSING ✅
+- Source: Commit 1d8abdb7
+- Implementation:
+  * Created src/lib/openrouter.ts - OpenRouter API client
+  * Created src/hooks/useAIOutfit.ts - Hook with 1-hour caching
+  * Weather signature-based cache keys for efficient caching
+  * Graceful fallback to static logic when AI unavailable
+  * Added .env.example for API key configuration
+
+NEW CATEGORIES ADDED:
+- Branding (1 feature)
+- AI Integration (1 feature)
+
+UPDATED STATISTICS:
+- Total Features: 82 (was 79)
+- Passing: 81 (was 78)
+- In Progress: 1 (Feature #47)
+- Completion: 98.8%
+
+These features were developed in a regular coding session but are now tracked
+in AutoCoder for full project visibility.
+
