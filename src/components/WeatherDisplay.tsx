@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useWeather } from '../hooks/useWeather'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import { useDarkMode } from '../hooks/useDarkMode'
 import { WeatherSkeleton } from './WeatherSkeleton'
 import { PullToRefreshIndicator } from './PullToRefreshIndicator'
 import { formatTemperature, formatWindSpeed } from '../lib/unitConversion'
@@ -135,11 +136,16 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
     prevWeatherRef.current = weather
   }, [weather])
 
+  // Detect system dark mode
+  const { isDarkMode } = useDarkMode()
+
   // Compute adaptive text colors for WCAG AA compliance
   const { classes: textColors } = useAdaptiveTextColors(
     weather?.temperature ?? null,
     weather?.weatherCode ?? null,
-    weather?.isDay ?? null
+    weather?.isDay ?? null,
+    'F',
+    isDarkMode
   )
 
   // Show skeleton after 1 second of loading (instead of simple emoji)

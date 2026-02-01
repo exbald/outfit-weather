@@ -3,6 +3,8 @@ import { ReactNode } from 'react'
 import { Drawer } from './Drawer'
 import { SettingsModal } from './SettingsModal'
 import { useSettingsContext } from '../contexts/SettingsContext'
+import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
+import { useDarkMode } from '../hooks/useDarkMode'
 import type { OutfitRecommendation } from '../hooks/useOutfit'
 
 interface LayoutProps {
@@ -29,6 +31,16 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
   // Feature #70: Save focus element to restore when modal closes
   const triggerRef = useRef<HTMLButtonElement>(null)
 
+  // Get adaptive text colors based on current weather/background
+  const { isDarkMode } = useDarkMode()
+  const { classes: textColors } = useAdaptiveTextColors(
+    temperature ?? null,
+    weatherCode ?? null,
+    isDay ?? null,
+    'F',
+    isDarkMode
+  )
+
   const openSettings = () => {
     // Save the currently focused element before opening modal
     triggerRef.current = document.activeElement as HTMLButtonElement
@@ -46,7 +58,7 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
       {/* Header area - contains app branding and settings button */}
       <header className="flex-shrink-0 px-4 pt-4 pb-2">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">OutFitWeather</h1>
+          <h1 className={`text-xl font-bold ${textColors.primary}`}>OutFitWeather</h1>
           <button
             ref={triggerRef}
             aria-label="Open settings"
@@ -56,7 +68,7 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-gray-700"
+              className={`h-6 w-6 ${textColors.secondary}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

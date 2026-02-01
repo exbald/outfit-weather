@@ -249,16 +249,19 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
           ref={drawerRef}
           className="bg-white/80 backdrop-blur-md rounded-t-3xl shadow-lg border-t border-black/5 cursor-pointer will-change-transform"
           style={{
-            // Combine spring animation value with drag offset
-            // springValue: 0 = collapsed (translated down), 1 = expanded (no translation)
-            // We animate from translateY(100%) to translateY(0)
+            // Animation logic:
+            // - Collapsed (springValue near 0): Handle visible at bottom, no transform
+            // - Expanding/collapsing: Animate the expanded content
+            // - Expanded (springValue near 1): Full drawer visible
             transform: isDragging
               ? `translateY(${isExpanded ? dragOffset : -dragOffset}px)`
-              : `translateY(${(1 - springValue) * 100}%)`,
+              : isExpanded
+                ? `translateY(${(1 - springValue) * 100}%)`
+                : 'translateY(0)',
             // Smooth scale effect during spring animation
-            scale: isDragging ? 1 : 0.97 + (springValue * 0.03),
-            // Subtle opacity change during animation
-            opacity: 0.5 + (springValue * 0.5),
+            scale: isDragging ? 1 : 0.98 + (springValue * 0.02),
+            // Keep drawer visible
+            opacity: 1,
           }}
           onClick={toggleDrawer}
           onTouchStart={handleTouchStart}

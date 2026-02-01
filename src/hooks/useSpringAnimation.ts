@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 
 /**
  * Spring physics configuration
@@ -58,6 +58,8 @@ const DEFAULT_CONFIG: Required<SpringConfig> = {
  * ```
  */
 export function useSpringAnimation(initialValue: number = 0): SpringAnimationResult {
+  // Use state to trigger re-renders when animation value changes
+  const [displayValue, setDisplayValue] = useState(initialValue)
   const currentValueRef = useRef(initialValue)
   const targetValueRef = useRef(initialValue)
   const velocityRef = useRef(0)
@@ -104,6 +106,8 @@ export function useSpringAnimation(initialValue: number = 0): SpringAnimationRes
   // Animation loop
   const animateLoop = useCallback(() => {
     const shouldContinue = simulateStep()
+    // Update display value to trigger React re-render
+    setDisplayValue(currentValueRef.current)
 
     if (shouldContinue) {
       rafIdRef.current = requestAnimationFrame(animateLoop)
@@ -157,7 +161,7 @@ export function useSpringAnimation(initialValue: number = 0): SpringAnimationRes
   }, [])
 
   return {
-    currentValue: currentValueRef.current,
+    currentValue: displayValue,
     animateTo,
     stop,
     isAnimating: isAnimatingRef.current,

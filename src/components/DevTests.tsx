@@ -6,10 +6,13 @@
 
 import { lazy, Suspense } from 'react'
 
+// Set to true to hide dev tests even in development mode (for end-user testing)
+const HIDE_DEV_TESTS = true
+
 // Early return for production - no imports at all
 // This ensures test components are tree-shaken out of the production bundle
 export function DevTests() {
-  if (!import.meta.env.DEV) {
+  if (!import.meta.env.DEV || HIDE_DEV_TESTS) {
     return null
   }
 
