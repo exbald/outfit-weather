@@ -1,5 +1,4 @@
 import { useState, useRef, TouchEvent, useEffect, useCallback } from 'react'
-import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { getFallbackOutfit, type OutfitRecommendation } from '../hooks/useOutfit'
 import { useSettings } from '../hooks/useSettings'
 import { useDrawerSpring } from '../hooks/useSpringAnimation'
@@ -10,6 +9,7 @@ import { useDrawerSpring } from '../hooks/useSpringAnimation'
  * Supports swipe-up gesture to expand, swipe-down/click to collapse
  *
  * Features:
+ * - 7-day forecast tabs (Today through 6 days out)
  * - Swipe-up gesture to expand drawer (Feature #28)
  * - Tap outside drawer (backdrop) to close (Feature #30)
  * - Swipe-down gesture or tap handle to collapse
@@ -23,17 +23,16 @@ import { useDrawerSpring } from '../hooks/useSpringAnimation'
  * - Modal behavior when expanded (backdrop + aria-modal)
  */
 
+/** Active day view: 0 = today, 1 = tomorrow, 2-6 = future days */
+type ActiveDayView = number
+
 interface DrawerProps {
-  /** All outfit recommendations for switching between views */
-  outfits?: {
-    now: OutfitRecommendation | null
-    today: OutfitRecommendation | null
-    tomorrow: OutfitRecommendation | null
-  }
-  /** Weather data for adaptive text colors on drawer (white background always) */
-  temperature?: number
-  weatherCode?: number
-  isDay?: number
+  /** All outfit recommendations for 7 days (index 0-6) */
+  dayOutfits?: (OutfitRecommendation | null)[]
+  /** Currently selected day index (controlled from parent) */
+  activeDayIndex?: ActiveDayView
+  /** Callback when day changes */
+  onDayChange?: (dayIndex: ActiveDayView) => void
 }
 
 /**
@@ -46,13 +45,24 @@ interface DrawerProps {
  * - Text colors optimized for white background
  * - WCAG AA compliant contrast ratios
  */
-export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps) {
+export function Drawer({ dayOutfits, activeDayIndex: controlledActiveDayIndex, onDayChange }: DrawerProps) {
   // Spring animation for drawer open/close (Feature #31)
   const { currentValue: springValue, expand, collapse } = useDrawerSpring()
 
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
-  const [activeView, setActiveView] = useState<'now' | 'today' | 'tomorrow'>('now')
+  // Support both controlled and uncontrolled mode
+  const [internalActiveDayIndex, setInternalActiveDayIndex] = useState<ActiveDayView>(0)
+
+  // Use controlled value if provided, otherwise use internal state
+  const activeDayIndex = controlledActiveDayIndex ?? internalActiveDayIndex
+  const setActiveDayIndex = (dayIndex: ActiveDayView) => {
+    if (onDayChange) {
+      onDayChange(dayIndex)
+    } else {
+      setInternalActiveDayIndex(dayIndex)
+    }
+  }
 
   // Feature #77: Prevent rapid interactions from causing glitches
   const isAnimatingRef = useRef(false)
@@ -65,26 +75,30 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
   // Get temperature unit setting
   const { settings } = useSettings()
 
-  // Get the current outfit based on active view
-  const currentOutfit = outfits?.[activeView] ?? null
+  // Get the current outfit based on active day
+  const currentOutfit = dayOutfits?.[activeDayIndex] ?? null
+
+  // Get the number of available days
+  const numDays = dayOutfits?.length ?? 0
 
   // Log error when outfit is missing (Feature #52)
   useEffect(() => {
     if (isExpanded && !currentOutfit) {
       console.error(
-        `[OutFitWeather] Missing outfit data for view "${activeView}". ` +
+        `[OutFitWeather] Missing outfit data for day index ${activeDayIndex}. ` +
         `This may indicate incomplete weather data or outfit logic failure. ` +
         `Using fallback outfit.`
       )
     }
-  }, [isExpanded, currentOutfit, activeView])
+  }, [isExpanded, currentOutfit, activeDayIndex])
 
   // Get fallback outfit when current outfit is null (Feature #52)
-  const displayOutfit = currentOutfit ?? getFallbackOutfit(activeView)
+  const displayOutfit = currentOutfit ?? getFallbackOutfit(activeDayIndex)
 
   const touchStartY = useRef<number>(0)
   const touchStartTime = useRef<number>(0)
   const drawerRef = useRef<HTMLDivElement>(null)
+  const tabsContainerRef = useRef<HTMLDivElement>(null)
 
   // Minimum swipe distance (in pixels) to trigger expand/collapse
   const SWIPE_THRESHOLD = 50
@@ -94,12 +108,23 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
   const MAX_DRAG_OFFSET = 300
 
   // Drawer always has white/semi-transparent background
-  // Use adaptive colors for white background (fallback to cool light color)
-  const { classes: textColors } = useAdaptiveTextColors(
-    temperature ?? 15, // Default mild temperature for white background
-    weatherCode ?? 0,
-    isDay ?? 1
-  )
+  // Use fixed dark text colors that work well on white background
+  const textColors = {
+    primary: 'text-gray-900',
+    secondary: 'text-gray-600',
+    tertiary: 'text-gray-500',
+    muted: 'text-gray-400'
+  }
+
+  // Scroll active tab into view when it changes
+  useEffect(() => {
+    if (isExpanded && tabsContainerRef.current) {
+      const activeTab = tabsContainerRef.current.querySelector('[data-active="true"]')
+      if (activeTab) {
+        activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+      }
+    }
+  }, [activeDayIndex, isExpanded])
 
   // Feature #77: Debounced drawer actions to prevent rapid interaction glitches
   const canPerformAction = useCallback(() => {
@@ -287,9 +312,9 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 className="w-12 h-1.5 bg-gray-400 rounded-full mb-2"
                 aria-hidden="true"
               />
-              {/* Swipe hint text - use tertiary color for better contrast on white */}
+              {/* Swipe hint text with eye emoji */}
               <p className={`text-sm font-medium ${textColors.secondary}`}>
-                Swipe up · What to wear
+                Swipe up · 👀 What to wear
               </p>
             </div>
           )}
@@ -303,27 +328,26 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 aria-hidden="true"
               />
 
-              {/* Navigation with Previous/Next arrow buttons and tabs (Feature #35) */}
+              {/* Navigation with Previous/Next arrow buttons and 7-day tabs */}
               <div
                 className="flex items-center justify-center gap-2 mb-3"
                 role="tablist"
-                aria-label="Outfit view selection"
+                aria-label="7-day forecast selection"
               >
-                {/* Previous button (Feature #35) */}
+                {/* Previous button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const views: ('now' | 'today' | 'tomorrow')[] = ['now', 'today', 'tomorrow']
-                    const currentIndex = views.indexOf(activeView)
-                    if (currentIndex > 0) {
-                      setActiveView(views[currentIndex - 1])
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent drawer from closing
+                    if (activeDayIndex > 0) {
+                      setActiveDayIndex(activeDayIndex - 1)
                     }
                   }}
-                  disabled={activeView === 'now'}
-                  aria-label="Previous outfit view"
+                  disabled={activeDayIndex === 0}
+                  aria-label="Previous day"
                   className={`
                     p-2 rounded-full transition-all duration-200 flex-shrink-0
-                    ${activeView === 'now'
+                    ${activeDayIndex === 0
                       ? 'text-gray-300 cursor-not-allowed'
                       : 'text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                     }
@@ -346,42 +370,54 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                   </svg>
                 </button>
 
-                {/* Tab buttons */}
-                {(['now', 'today', 'tomorrow'] as const).map((view) => (
-                  <button
-                    key={view}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeView === view}
-                    aria-controls="outfit-panel"
-                    onClick={() => setActiveView(view)}
-                    className={`
-                      px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex-shrink-0
-                      ${activeView === view
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }
-                    `}
-                  >
-                    {view.charAt(0).toUpperCase() + view.slice(1)}
-                  </button>
-                ))}
+                {/* Scrollable tab container for 7 days */}
+                <div
+                  ref={tabsContainerRef}
+                  className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth px-1 max-w-[calc(100%-80px)]"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {dayOutfits?.map((outfit, index) => {
+                    const dayLabel = outfit?.dayLabel ?? (index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : `Day ${index + 1}`)
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        role="tab"
+                        data-active={activeDayIndex === index}
+                        aria-selected={activeDayIndex === index}
+                        aria-controls="outfit-panel"
+                        onClick={(e) => {
+                          e.stopPropagation() // Prevent drawer from closing
+                          setActiveDayIndex(index)
+                        }}
+                        className={`
+                          px-3 py-2 rounded-full text-sm font-medium transition-all duration-200 flex-shrink-0 whitespace-nowrap
+                          ${activeDayIndex === index
+                            ? 'bg-blue-500 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }
+                        `}
+                      >
+                        {dayLabel}
+                      </button>
+                    )
+                  })}
+                </div>
 
-                {/* Next button (Feature #35) */}
+                {/* Next button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const views: ('now' | 'today' | 'tomorrow')[] = ['now', 'today', 'tomorrow']
-                    const currentIndex = views.indexOf(activeView)
-                    if (currentIndex < views.length - 1) {
-                      setActiveView(views[currentIndex + 1])
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent drawer from closing
+                    if (activeDayIndex < numDays - 1) {
+                      setActiveDayIndex(activeDayIndex + 1)
                     }
                   }}
-                  disabled={activeView === 'tomorrow'}
-                  aria-label="Next outfit view"
+                  disabled={activeDayIndex >= numDays - 1}
+                  aria-label="Next day"
                   className={`
                     p-2 rounded-full transition-all duration-200 flex-shrink-0
-                    ${activeView === 'tomorrow'
+                    ${activeDayIndex >= numDays - 1
                       ? 'text-gray-300 cursor-not-allowed'
                       : 'text-gray-600 hover:bg-gray-200 active:bg-gray-300'
                     }
@@ -405,20 +441,20 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 </button>
               </div>
 
-              {/* View indicator dots (Feature #34) */}
+              {/* View indicator dots for 7 days */}
               <div
-                className="flex items-center justify-center gap-3 mb-4"
+                className="flex items-center justify-center gap-1.5 mb-4"
                 role="presentation"
                 aria-hidden="true"
               >
-                {(['now', 'today', 'tomorrow'] as const).map((view) => (
+                {dayOutfits?.map((_, index) => (
                   <div
-                    key={view}
+                    key={index}
                     className={`
                       h-1.5 rounded-full transition-all duration-300 ease-out
-                      ${activeView === view
-                        ? 'w-8 bg-blue-500'
-                        : 'w-2 bg-gray-300'
+                      ${activeDayIndex === index
+                        ? 'w-6 bg-blue-500'
+                        : 'w-1.5 bg-gray-300'
                       }
                     `}
                   />
@@ -430,7 +466,7 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 id="outfit-panel"
                 role="tabpanel"
                 aria-live="polite"
-                aria-label={`Outfit recommendation for ${activeView}: ${displayOutfit.emojis}, ${displayOutfit.oneLiner}`}
+                aria-label={`Outfit recommendation for ${displayOutfit.dayLabel ?? 'selected day'}: ${displayOutfit.emojis}, ${displayOutfit.oneLiner}`}
                 className="text-center mb-3"
               >
                 <div
@@ -447,8 +483,8 @@ export function Drawer({ outfits, temperature, weatherCode, isDay }: DrawerProps
                 </p>
               </div>
 
-              {/* High/Low temperature display for Today and Tomorrow views (Feature #61) */}
-              {(activeView === 'today' || activeView === 'tomorrow') && displayOutfit.highTemp !== undefined && displayOutfit.lowTemp !== undefined && (
+              {/* High/Low temperature display for all day views */}
+              {displayOutfit.highTemp !== undefined && displayOutfit.lowTemp !== undefined && (
                 <div className="text-center mt-3">
                   <span className={`text-sm font-medium ${textColors.secondary}`}>
                     High: {Math.round(displayOutfit.highTemp)}°{settings.temperatureUnit} · Low: {Math.round(displayOutfit.lowTemp)}°{settings.temperatureUnit}

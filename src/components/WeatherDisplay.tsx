@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useWeather } from '../hooks/useWeather'
+import { useWeather, type WeatherData } from '../hooks/useWeather'
 import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import { useDarkMode } from '../hooks/useDarkMode'
@@ -7,6 +7,7 @@ import { WeatherSkeleton } from './WeatherSkeleton'
 import { PullToRefreshIndicator } from './PullToRefreshIndicator'
 import { formatTemperature, formatWindSpeed } from '../lib/unitConversion'
 import { useSettingsContext } from '../contexts/SettingsContext'
+import type { OutfitRecommendation } from '../hooks/useOutfit'
 
 interface WeatherDisplayProps {
   /** Latitude coordinate */
@@ -15,6 +16,10 @@ interface WeatherDisplayProps {
   lon: number
   /** Optional location name to display */
   locationName?: string
+  /** Current outfit recommendation to display on main page */
+  nowOutfit?: OutfitRecommendation | null
+  /** Weather data passed from parent (to avoid duplicate fetch) */
+  weather?: WeatherData
 }
 
 /**
@@ -88,9 +93,12 @@ function formatCacheAge(seconds: number): string {
  * - All text colors adapt to background for WCAG AA compliance
  * - Uses semantic HTML and ARIA labels
  */
-export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) {
-  const { weather, loading, refreshing, showSkeleton, showStillFetching, error, cacheAge, offline, retry } = useWeather(lat, lon)
-  const { temperatureUnit, windSpeedUnit } = useSettingsContext()
+export function WeatherDisplay({ lat, lon, locationName, nowOutfit, weather: passedWeather }: WeatherDisplayProps) {
+  const { weather: fetchedWeather, loading, refreshing, showSkeleton, showStillFetching, error, cacheAge, offline, retry } = useWeather(lat, lon)
+
+  // Use passed weather if available, otherwise use fetched
+  const weather = passedWeather ?? fetchedWeather
+  const { temperatureUnit, windSpeedUnit, themePreference } = useSettingsContext()
 
   // Feature #57: Pull-to-refresh gesture
   const {
@@ -136,8 +144,8 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
     prevWeatherRef.current = weather
   }, [weather])
 
-  // Detect system dark mode
-  const { isDarkMode } = useDarkMode()
+  // Detect dark mode based on user preference
+  const { isDarkMode } = useDarkMode(themePreference)
 
   // Compute adaptive text colors for WCAG AA compliance
   const { classes: textColors } = useAdaptiveTextColors(
@@ -194,6 +202,16 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
 
   if (!weather) {
     return null
+  }
+
+  // Display current weather data
+  const displayData = {
+    temperature: weather.temperature,
+    apparentTemperature: weather.apparentTemperature,
+    condition: weather.condition,
+    icon: weather.icon,
+    highTemp: weather.daily.today.temperatureMax,
+    lowTemp: weather.daily.today.temperatureMin,
   }
 
   // If we have an error but also have cached weather data, show the weather
@@ -256,19 +274,19 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
             changes.iconChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
           }`}
           role="img"
-          aria-label={weather.condition}
+          aria-label={displayData.condition}
         >
-          {weather.icon}
+          {displayData.icon}
         </div>
 
-        {/* Current temperature - prominent display (large text) */}
+        {/* Temperature display */}
         <section aria-label="Temperature">
           <p
             className={`text-7xl font-bold tracking-tight transition-all duration-300 ease-out ${
               textColors.primary} ${changes.temperatureChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
             }`}
           >
-            {formatTemperature(weather.temperature, temperatureUnit)}
+            {formatTemperature(displayData.temperature, temperatureUnit)}
           </p>
           {/* Feels like temperature - shown when differs from actual by >2° */}
           {Math.abs(weather.temperature - weather.apparentTemperature) > 2 && (
@@ -289,7 +307,7 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
               textColors.secondary} ${changes.conditionChanged ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
             }`}
           >
-            {weather.condition}
+            {displayData.condition}
           </p>
         </section>
 
@@ -337,6 +355,22 @@ export function WeatherDisplay({ lat, lon, locationName }: WeatherDisplayProps) 
             {isRefreshing ? 'Updating...' : offline ? `Offline · ${formatCacheAge(cacheAge)}` : formatCacheAge(cacheAge)}
           </p>
         </div>
+
+        {/* Now outfit section - displayed below cache age */}
+        {nowOutfit && (
+          <section aria-label="Current outfit recommendation" className="text-center mt-4 pt-4 border-t border-black/5">
+            <div
+              className="text-4xl mb-2"
+              role="img"
+              aria-label={`Outfit items: ${nowOutfit.emojis}`}
+            >
+              {nowOutfit.emojis}
+            </div>
+            <p className={`text-base ${textColors.secondary}`}>
+              {nowOutfit.oneLiner}
+            </p>
+          </section>
+        )}
       </section>
     </div>
   )

@@ -1,13 +1,15 @@
 import { useEffect, useRef } from 'react'
-import type { TemperatureUnit, WindSpeedUnit } from '../hooks/useSettings'
+import type { TemperatureUnit, WindSpeedUnit, ThemePreference } from '../hooks/useSettings'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
   temperatureUnit: TemperatureUnit
   windSpeedUnit: WindSpeedUnit
+  themePreference: ThemePreference
   setTemperatureUnit: (unit: TemperatureUnit) => void
   setWindSpeedUnit: (unit: WindSpeedUnit) => void
+  setThemePreference: (theme: ThemePreference) => void
 }
 
 /**
@@ -53,8 +55,10 @@ export function SettingsModal({
   onClose,
   temperatureUnit,
   windSpeedUnit,
+  themePreference,
   setTemperatureUnit,
-  setWindSpeedUnit
+  setWindSpeedUnit,
+  setThemePreference
 }: SettingsModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -93,15 +97,15 @@ export function SettingsModal({
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="px-6 py-4 border-b border-gray-100">
-          <h2 id="settings-title" className="text-xl font-bold text-gray-800">
-            Settings
+        <header className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 id="settings-title" className="text-xl font-bold text-gray-800 dark:text-gray-100">
+            🧥 Settings
           </h2>
-          <p id="settings-description" className="text-sm text-gray-600 mt-1">
+          <p id="settings-description" className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Customize your weather display preferences
           </p>
         </header>
@@ -112,7 +116,7 @@ export function SettingsModal({
           <div>
             <label
               id="temp-unit-label"
-              className="block text-sm font-medium text-gray-700 mb-3"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
             >
               Temperature Unit
             </label>
@@ -127,8 +131,8 @@ export function SettingsModal({
                 onClick={() => setTemperatureUnit('C')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
                   temperatureUnit === 'C'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 aria-pressed={temperatureUnit === 'C'}
                 aria-label="Select Celsius for temperature"
@@ -140,8 +144,8 @@ export function SettingsModal({
                 onClick={() => setTemperatureUnit('F')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
                   temperatureUnit === 'F'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 aria-pressed={temperatureUnit === 'F'}
                 aria-label="Select Fahrenheit for temperature"
@@ -149,7 +153,7 @@ export function SettingsModal({
                 Fahrenheit (°F)
               </button>
             </div>
-            <p id="temp-unit-description" className="mt-2 text-xs text-gray-500">
+            <p id="temp-unit-description" className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               Choose your preferred temperature display unit
             </p>
           </div>
@@ -158,7 +162,7 @@ export function SettingsModal({
           <div>
             <label
               id="wind-unit-label"
-              className="block text-sm font-medium text-gray-700 mb-3"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
             >
               Wind Speed Unit
             </label>
@@ -173,8 +177,8 @@ export function SettingsModal({
                 onClick={() => setWindSpeedUnit('kmh')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
                   windSpeedUnit === 'kmh'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 aria-pressed={windSpeedUnit === 'kmh'}
                 aria-label="Select kilometers per hour for wind speed"
@@ -186,8 +190,8 @@ export function SettingsModal({
                 onClick={() => setWindSpeedUnit('mph')}
                 className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-lg ${
                   windSpeedUnit === 'mph'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
                 aria-pressed={windSpeedUnit === 'mph'}
                 aria-label="Select miles per hour for wind speed"
@@ -195,18 +199,77 @@ export function SettingsModal({
                 mph
               </button>
             </div>
-            <p id="wind-unit-description" className="mt-2 text-xs text-gray-500">
+            <p id="wind-unit-description" className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               Choose your preferred wind speed display unit
+            </p>
+          </div>
+
+          {/* Theme Preference */}
+          <div>
+            <label
+              id="theme-label"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+            >
+              Theme
+            </label>
+            <div
+              className="flex gap-2"
+              role="group"
+              aria-labelledby="theme-label"
+              aria-describedby="theme-description"
+            >
+              <button
+                type="button"
+                onClick={() => setThemePreference('light')}
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-base ${
+                  themePreference === 'light'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                aria-pressed={themePreference === 'light'}
+                aria-label="Use light theme"
+              >
+                ☀️ Light
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemePreference('dark')}
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-base ${
+                  themePreference === 'dark'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                aria-pressed={themePreference === 'dark'}
+                aria-label="Use dark theme"
+              >
+                🌙 Dark
+              </button>
+              <button
+                type="button"
+                onClick={() => setThemePreference('system')}
+                className={`flex-1 py-3.5 px-4 rounded-xl font-medium transition-all text-base ${
+                  themePreference === 'system'
+                    ? 'bg-amber-500 text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                aria-pressed={themePreference === 'system'}
+                aria-label="Use system theme preference"
+              >
+                💻 System
+              </button>
+            </div>
+            <p id="theme-description" className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Choose light, dark, or follow your system preference
             </p>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+        <footer className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3.5 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors text-lg"
+            className="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-semibold rounded-xl transition-colors text-lg"
             aria-label="Close settings dialog"
           >
             Done

@@ -68,9 +68,17 @@ export function usePwaInstall() {
     setIsInstallable(false)
   }
 
+  const dismissInstall = () => {
+    // Just hide the prompt without reloading
+    setIsInstallable(false)
+    setDeferredPrompt(null)
+    console.log('[PWA] Install prompt dismissed by user')
+  }
+
   return {
     isInstallable,
     isInstalled,
-    promptInstall
+    promptInstall,
+    dismissInstall
   }
 }

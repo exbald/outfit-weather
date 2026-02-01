@@ -28,7 +28,7 @@ export default defineConfig({
         name: 'OutFitWeather',
         short_name: 'OutFit',
         description: 'See what to wear based on the weather',
-        theme_color: '#3b82f6',
+        theme_color: '#f59e0b',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',

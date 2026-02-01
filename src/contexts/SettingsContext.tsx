@@ -1,9 +1,10 @@
 import { createContext, useContext, ReactNode } from 'react'
-import { useSettings, type UseSettingsResult, type TemperatureUnit, type WindSpeedUnit } from '../hooks/useSettings'
+import { useSettings, type UseSettingsResult, type TemperatureUnit, type WindSpeedUnit, type ThemePreference } from '../hooks/useSettings'
 
 interface SettingsContextValue extends UseSettingsResult {
   temperatureUnit: TemperatureUnit
   windSpeedUnit: WindSpeedUnit
+  themePreference: ThemePreference
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
@@ -21,7 +22,8 @@ export function SettingsProvider({ children }: SettingsProviderProps) {
   const contextValue: SettingsContextValue = {
     ...settingsHook,
     temperatureUnit: settingsHook.settings.temperatureUnit,
-    windSpeedUnit: settingsHook.settings.windSpeedUnit
+    windSpeedUnit: settingsHook.settings.windSpeedUnit,
+    themePreference: settingsHook.settings.themePreference
   }
 
   return (

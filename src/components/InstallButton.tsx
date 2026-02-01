@@ -1,6 +1,7 @@
 interface InstallButtonProps {
   isInstallable: boolean
   onInstall: () => void
+  onDismiss: () => void
 }
 
 /**
@@ -8,7 +9,7 @@ interface InstallButtonProps {
  * Shown when the app can be installed as a PWA
  * Follows the spec: "Add to Home Screen" prompt after 2nd visit (not aggressive)
  */
-export function InstallButton({ isInstallable, onInstall }: InstallButtonProps) {
+export function InstallButton({ isInstallable, onInstall, onDismiss }: InstallButtonProps) {
   if (!isInstallable) {
     return null
   }
@@ -22,7 +23,7 @@ export function InstallButton({ isInstallable, onInstall }: InstallButtonProps) 
       <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
         <div className="flex items-start gap-3">
           <div className="text-4xl" role="img" aria-label="App icon">
-            🌤️
+            🧥
           </div>
           <div className="flex-1 min-w-0">
             <h3 id="install-title" className="text-base font-semibold text-gray-800 mb-1">
@@ -34,13 +35,13 @@ export function InstallButton({ isInstallable, onInstall }: InstallButtonProps) 
             <div className="flex gap-2">
               <button
                 onClick={onInstall}
-                className="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-colors font-medium"
                 type="button"
               >
                 Install
               </button>
               <button
-                onClick={() => window.location.reload()}
+                onClick={onDismiss}
                 className="px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium text-sm"
                 type="button"
               >

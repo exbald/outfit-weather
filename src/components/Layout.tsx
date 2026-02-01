@@ -7,16 +7,20 @@ import { useAdaptiveTextColors } from '../hooks/useAdaptiveTextColors'
 import { useDarkMode } from '../hooks/useDarkMode'
 import type { OutfitRecommendation } from '../hooks/useOutfit'
 
+/** Active day view: day index (0 = today, 1 = tomorrow, 2-6 = future days) */
+export type ActiveDayView = number
+
 interface LayoutProps {
   children: ReactNode
-  outfits?: {
-    now: OutfitRecommendation | null
-    today: OutfitRecommendation | null
-    tomorrow: OutfitRecommendation | null
-  }
+  /** Array of outfit recommendations for 7 days (index 0-6) */
+  dayOutfits?: (OutfitRecommendation | null)[]
   temperature?: number
   weatherCode?: number
   isDay?: number
+  /** Currently selected day index for drawer (0-6) */
+  activeDayIndex?: ActiveDayView
+  /** Callback when day changes in drawer */
+  onDayChange?: (dayIndex: ActiveDayView) => void
 }
 
 /**
@@ -24,15 +28,15 @@ interface LayoutProps {
  * Provides semantic HTML structure with header, main content area, and drawer
  * Feature #70: Focus restoration for accessibility
  */
-export function Layout({ children, outfits, temperature, weatherCode, isDay }: LayoutProps) {
+export function Layout({ children, dayOutfits, temperature, weatherCode, isDay, activeDayIndex = 0, onDayChange }: LayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const { temperatureUnit, windSpeedUnit, setTemperatureUnit, setWindSpeedUnit } = useSettingsContext()
+  const { temperatureUnit, windSpeedUnit, themePreference, setTemperatureUnit, setWindSpeedUnit, setThemePreference } = useSettingsContext()
 
   // Feature #70: Save focus element to restore when modal closes
   const triggerRef = useRef<HTMLButtonElement>(null)
 
-  // Get adaptive text colors based on current weather/background
-  const { isDarkMode } = useDarkMode()
+  // Get adaptive text colors based on current weather/background and theme preference
+  const { isDarkMode } = useDarkMode(themePreference)
   const { classes: textColors } = useAdaptiveTextColors(
     temperature ?? null,
     weatherCode ?? null,
@@ -58,7 +62,7 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
       {/* Header area - contains app branding and settings button */}
       <header className="flex-shrink-0 px-4 pt-4 pb-2">
         <div className="max-w-md mx-auto flex items-center justify-between">
-          <h1 className={`text-xl font-bold ${textColors.primary}`}>OutFitWeather</h1>
+          <h1 className={`text-xl font-bold ${textColors.primary}`}>🧥 OutFitWeather</h1>
           <button
             ref={triggerRef}
             aria-label="Open settings"
@@ -98,12 +102,11 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
         </div>
       </main>
 
-      {/* Drawer component - for outfit recommendations */}
+      {/* Drawer component - for 7-day outfit recommendations */}
       <Drawer
-        outfits={outfits}
-        temperature={temperature}
-        weatherCode={weatherCode}
-        isDay={isDay}
+        dayOutfits={dayOutfits}
+        activeDayIndex={activeDayIndex}
+        onDayChange={onDayChange}
       />
 
       {/* Settings modal */}
@@ -112,8 +115,10 @@ export function Layout({ children, outfits, temperature, weatherCode, isDay }: L
         onClose={closeSettings}
         temperatureUnit={temperatureUnit}
         windSpeedUnit={windSpeedUnit}
+        themePreference={themePreference}
         setTemperatureUnit={setTemperatureUnit}
         setWindSpeedUnit={setWindSpeedUnit}
+        setThemePreference={setThemePreference}
       />
     </div>
   )

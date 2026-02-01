@@ -7,10 +7,12 @@ import { useGeolocation } from './hooks/useGeolocation'
 import { useAdaptiveBackground } from './hooks/useAdaptiveBackground'
 import { useAdaptiveTextColors } from './hooks/useAdaptiveTextColors'
 import { useWeather } from './hooks/useWeather'
-import { useOutfit } from './hooks/useOutfit'
+import { useOutfit, type OutfitRecommendation } from './hooks/useOutfit'
+import { useAIOutfit } from './hooks/useAIOutfit'
 import { usePwaInstall } from './hooks/usePwaInstall'
 import { useLocationName } from './hooks/useLocationName'
 import { useDarkMode } from './hooks/useDarkMode'
+import { useSettingsContext } from './contexts/SettingsContext'
 
 /**
  * Location permission prompt screen component
@@ -285,8 +287,9 @@ function ManualLocationEntry({
 
 function App() {
   const { position, error: locationError, loading: locationLoading, requestLocation, permissionShown, grantPermission } = useGeolocation()
-  const { isInstallable, promptInstall } = usePwaInstall()
-  const { isDarkMode } = useDarkMode() // Feature #56: Detect system dark mode preference
+  const { isInstallable, promptInstall, dismissInstall } = usePwaInstall()
+  const { themePreference } = useSettingsContext()
+  const { isDarkMode } = useDarkMode(themePreference) // Feature #56: Detect system dark mode preference
   // Manual location entry state
   const [manualLocation, setManualLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [showManualEntry, setShowManualEntry] = useState(false)
@@ -295,6 +298,8 @@ function App() {
     weatherCode: number
     isDay: number
   } | null>(null)
+  // Active day index for drawer (0 = today, 1 = tomorrow, 2-6 = future days)
+  const [activeDayIndex, setActiveDayIndex] = useState<number>(0)
 
   // Handlers for manual location (used in LocationPermissionDenied and ManualLocationEntry)
   const handleManualLocationClick = () => setShowManualEntry(true)
@@ -316,8 +321,39 @@ function App() {
     currentPosition?.longitude
   )
 
-  // Generate outfit recommendations based on weather
-  const { outfits } = useOutfit(bgWeather)
+  // Generate outfit recommendations based on weather (static fallback)
+  const { outfits: staticOutfits } = useOutfit(bgWeather)
+
+  // Get AI-powered outfit recommendation for the active day in drawer
+  const { aiResponse, loading: aiLoading } = useAIOutfit(bgWeather, activeDayIndex)
+
+  // Build day outfits array for drawer, merging AI response for active day
+  const dayOutfits: (OutfitRecommendation | null)[] = staticOutfits.days.map((outfit, index) => {
+    if (!outfit) return null
+
+    // Override the active day's outfit with AI response if available
+    if (aiResponse && index === activeDayIndex) {
+      return {
+        ...outfit,
+        emojis: aiResponse.emojis,
+        oneLiner: aiResponse.oneLiner
+      }
+    }
+
+    return outfit
+  })
+
+  // Now outfit for main page - also try AI if we're looking at current time
+  const nowOutfit = staticOutfits.now
+
+  // Log AI status for debugging (only in development)
+  if (import.meta.env.DEV && bgWeather) {
+    if (aiLoading) {
+      console.log('[App] AI recommendation loading for day:', activeDayIndex)
+    } else if (aiResponse) {
+      console.log('[App] Using AI recommendation for day:', activeDayIndex)
+    }
+  }
 
   // Update background weather data when available
   if (bgWeather && !weatherForBackground) {
@@ -382,7 +418,7 @@ function App() {
           <LocationLoading textColors={textColors} />
           <DevTests />
         </Layout>
-        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
+        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
       </div>
     )
   }
@@ -397,7 +433,7 @@ function App() {
             <LocationTimeout onRetry={requestLocation} textColors={textColors} />
             <DevTests />
           </Layout>
-          <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
+          <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
         </div>
       )
     }
@@ -414,7 +450,7 @@ function App() {
           />
           <DevTests />
         </Layout>
-        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
+        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
       </div>
     )
   }
@@ -425,24 +461,28 @@ function App() {
     return (
       <div style={backgroundStyle}>
         <Layout
-          outfits={outfits}
+          dayOutfits={dayOutfits}
           temperature={bgWeather?.temperature}
           weatherCode={bgWeather?.weatherCode}
           isDay={bgWeather?.isDay}
+          activeDayIndex={activeDayIndex}
+          onDayChange={setActiveDayIndex}
         >
           <div className="py-8 space-y-8">
-            {/* Main weather display */}
+            {/* Main weather display with Now outfit */}
             <WeatherDisplay
               lat={positionForDisplay.latitude}
               lon={positionForDisplay.longitude}
               locationName={locationName ?? undefined}
+              nowOutfit={nowOutfit}
+              weather={bgWeather ?? undefined}
             />
 
             {/* Development tests only - removed from production build */}
             <DevTests />
           </div>
         </Layout>
-        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} />
+        <InstallButton isInstallable={isInstallable} onInstall={promptInstall} onDismiss={dismissInstall} />
       </div>
     )
   }

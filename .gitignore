@@ -3,8 +3,8 @@
 features.db-shm
 features.db-wal
 features.db-journal
-.agent.lock
-*.log
-features.db-shm
-features.db-wal
-features.db-journal
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local

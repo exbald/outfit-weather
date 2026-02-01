@@ -3,6 +3,8 @@
  * Handles localStorage caching for weather data with timestamp-based expiry
  */
 
+import type { DailyWeatherData } from './openmeteo'
+
 export interface CachedWeatherData {
   /** Cached weather data */
   data: {
@@ -19,22 +21,12 @@ export interface CachedWeatherData {
       timezone: string
     }
     daily: {
-      today: {
-        time: string
-        temperatureMax: number
-        temperatureMin: number
-        weatherCode: number
-        precipitationProbabilityMax: number
-        uvIndexMax: number
-      }
-      tomorrow: {
-        time: string
-        temperatureMax: number
-        temperatureMin: number
-        weatherCode: number
-        precipitationProbabilityMax: number
-        uvIndexMax: number
-      }
+      /** Array of 7 days of forecast data */
+      days: DailyWeatherData[]
+      /** Alias for days[0] - backward compatibility */
+      today: DailyWeatherData
+      /** Alias for days[1] - backward compatibility */
+      tomorrow: DailyWeatherData
     }
   }
   /** Timestamp when data was fetched (Unix timestamp in milliseconds) */
@@ -128,6 +120,14 @@ export function loadWeatherData(
     if (typeof parsed.data.apparentTemperature !== 'number') {
       console.log('Migrating old cache format: adding apparentTemperature')
       parsed.data.apparentTemperature = parsed.data.temperature
+    }
+
+    // Handle migration from old cache format (missing days array)
+    if (!parsed.data.daily.days) {
+      console.log('Migrating old cache format: cache missing days array, invalidating')
+      // Can't migrate without days array - invalidate cache
+      clearWeatherData()
+      return null
     }
 
     return parsed.data

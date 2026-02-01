@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export interface LocationPosition {
   latitude: number
@@ -30,6 +30,80 @@ export const GEOLOCATION_OPTIONS: PositionOptions = {
   enableHighAccuracy: true, // Request GPS-level accuracy for weather
   timeout: 10000, // 10 second timeout (as specified in app spec)
   maximumAge: 300000 // Accept cached position up to 5 minutes old
+}
+
+// localStorage keys for persisting location state
+const LOCATION_STORAGE_KEY = 'outfit_weather_location'
+const PERMISSION_STORAGE_KEY = 'outfit_weather_location_granted'
+
+interface StoredLocation {
+  latitude: number
+  longitude: number
+  timestamp: number
+}
+
+/**
+ * Save location to localStorage
+ */
+function saveLocation(position: LocationPosition): void {
+  try {
+    const stored: StoredLocation = {
+      latitude: position.latitude,
+      longitude: position.longitude,
+      timestamp: Date.now()
+    }
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(stored))
+    localStorage.setItem(PERMISSION_STORAGE_KEY, 'true')
+    console.log('[Geolocation] Saved location to storage')
+  } catch (error) {
+    console.warn('[Geolocation] Failed to save location:', error)
+  }
+}
+
+/**
+ * Load stored location from localStorage
+ * Returns null if no stored location or if it's too old (> 24 hours)
+ */
+function loadStoredLocation(): LocationPosition | null {
+  try {
+    const stored = localStorage.getItem(LOCATION_STORAGE_KEY)
+    if (!stored) return null
+
+    const parsed: StoredLocation = JSON.parse(stored)
+    const age = Date.now() - parsed.timestamp
+    const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+
+    if (age > maxAge) {
+      console.log('[Geolocation] Stored location expired')
+      return null
+    }
+
+    console.log('[Geolocation] Loaded stored location:', {
+      latitude: parsed.latitude,
+      longitude: parsed.longitude,
+      ageMinutes: Math.round(age / 60000)
+    })
+
+    return {
+      latitude: parsed.latitude,
+      longitude: parsed.longitude,
+      timestamp: parsed.timestamp
+    }
+  } catch (error) {
+    console.warn('[Geolocation] Failed to load stored location:', error)
+    return null
+  }
+}
+
+/**
+ * Check if user previously granted location permission
+ */
+function hasGrantedPermission(): boolean {
+  try {
+    return localStorage.getItem(PERMISSION_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -66,10 +140,17 @@ function parseGeolocationError(error: GeolocationPositionError): GeolocationErro
  * @returns Geolocation state and control functions
  */
 export function useGeolocation(): UseGeolocationResult {
-  const [position, setPosition] = useState<LocationPosition | null>(null)
+  // Initialize state from localStorage if available
+  const [position, setPosition] = useState<LocationPosition | null>(() => loadStoredLocation())
   const [error, setError] = useState<GeolocationError | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [permissionShown, setPermissionShown] = useState<boolean>(true) // Show permission prompt first
+  // Skip permission prompt if user previously granted permission AND we have stored location
+  const [permissionShown, setPermissionShown] = useState<boolean>(() => {
+    const hasPermission = hasGrantedPermission()
+    const hasLocation = loadStoredLocation() !== null
+    // Show prompt only if user hasn't granted permission before OR we have no stored location
+    return !hasPermission || !hasLocation
+  })
 
   /**
    * Grant permission to request location
@@ -79,6 +160,16 @@ export function useGeolocation(): UseGeolocationResult {
     setPermissionShown(false)
     requestLocation()
   }
+
+  // On mount, if we have stored location, refresh in background
+  useEffect(() => {
+    const storedLocation = loadStoredLocation()
+    if (storedLocation && hasGrantedPermission()) {
+      // We have stored location, refresh in background without blocking UI
+      console.log('[Geolocation] Using stored location, refreshing in background')
+      requestLocation()
+    }
+  }, [])
 
   /**
    * Request the user's current location
@@ -117,6 +208,9 @@ export function useGeolocation(): UseGeolocationResult {
           accuracy: locationData.accuracy,
           timestamp: new Date(locationData.timestamp || Date.now()).toISOString()
         })
+
+        // Save to localStorage for persistence across refreshes
+        saveLocation(locationData)
 
         setPosition(locationData)
         setLoading(false)

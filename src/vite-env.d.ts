@@ -5,6 +5,9 @@ interface ImportMetaEnv {
   readonly PROD: boolean
   readonly MODE: string
   readonly BASE_URL: string
+  // OpenRouter AI configuration (optional)
+  readonly VITE_OPENROUTER_API_KEY?: string
+  readonly VITE_OPENROUTER_MODEL?: string
 }
 
 interface ImportMeta {

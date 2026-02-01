@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react'
 
 export type TemperatureUnit = 'C' | 'F'
 export type WindSpeedUnit = 'kmh' | 'mph'
+export type ThemePreference = 'light' | 'dark' | 'system'
 
 export interface Settings {
   temperatureUnit: TemperatureUnit
   windSpeedUnit: WindSpeedUnit
+  themePreference: ThemePreference
 }
 
 const SETTINGS_STORAGE_KEY = 'outfitweather_settings'
 
 const DEFAULT_SETTINGS: Settings = {
   temperatureUnit: 'C',
-  windSpeedUnit: 'kmh'
+  windSpeedUnit: 'kmh',
+  themePreference: 'system'
 }
 
 /**
@@ -26,7 +29,8 @@ function detectDefaultUnits(): Settings {
 
   return {
     temperatureUnit: isUSLocale ? 'F' : 'C',
-    windSpeedUnit: isUSLocale ? 'mph' : 'kmh'
+    windSpeedUnit: isUSLocale ? 'mph' : 'kmh',
+    themePreference: 'system'
   }
 }
 
@@ -61,6 +65,7 @@ export interface UseSettingsResult {
   settings: Settings
   setTemperatureUnit: (unit: TemperatureUnit) => void
   setWindSpeedUnit: (unit: WindSpeedUnit) => void
+  setThemePreference: (theme: ThemePreference) => void
   resetToDefaults: () => void
 }
 
@@ -88,6 +93,10 @@ export function useSettings(): UseSettingsResult {
     setSettingsState(prev => ({ ...prev, windSpeedUnit: unit }))
   }
 
+  const setThemePreference = (theme: ThemePreference) => {
+    setSettingsState(prev => ({ ...prev, themePreference: theme }))
+  }
+
   const resetToDefaults = () => {
     setSettingsState(detectDefaultUnits())
   }
@@ -96,6 +105,7 @@ export function useSettings(): UseSettingsResult {
     settings,
     setTemperatureUnit,
     setWindSpeedUnit,
+    setThemePreference,
     resetToDefaults
   }
 }

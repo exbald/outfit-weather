@@ -11,8 +11,9 @@ import { generateOneLiner, getFallbackOneLiner } from '../lib/oneLiner'
 
 /**
  * Outfit recommendation view type
+ * 'now' = current conditions, number = day index (0 = today, 1 = tomorrow, 2-6 = future days)
  */
-export type OutfitView = 'now' | 'today' | 'tomorrow'
+export type OutfitView = 'now' | number
 
 /**
  * Complete outfit recommendation with emojis and one-liner
@@ -21,19 +22,22 @@ export interface OutfitRecommendation {
   emojis: string
   oneLiner: string
   view: OutfitView
-  /** High temperature for the day (only for 'today' and 'tomorrow' views) */
+  /** High temperature for the day (for day views) */
   highTemp?: number
-  /** Low temperature for the day (only for 'today' and 'tomorrow' views) */
+  /** Low temperature for the day (for day views) */
   lowTemp?: number
+  /** Day index in the forecast (0-6) - only for day views */
+  dayIndex?: number
+  /** Human-readable day label ("Today", "Tomorrow", "Wed", etc.) */
+  dayLabel?: string
 }
 
 /**
  * Hook to generate outfit recommendations based on weather data
  *
- * Creates outfit recommendations for three timeframes:
+ * Creates outfit recommendations for:
  * - Now: Based on current apparent temperature and conditions
- * - Today: Based on daily high/low range and worst weather of the day
- * - Tomorrow: Based on tomorrow's forecast
+ * - 7 Days: Based on daily forecast with worst weather of each day
  *
  * Each recommendation includes:
  * - Emojis: Visual outfit representation with weather modifiers
@@ -44,13 +48,15 @@ export interface OutfitRecommendation {
  *
  * @example
  * ```ts
- * const { outfits, getCurrentOutfit, getTodayOutfit, getTomorrowOutfit } = useOutfit(weather)
+ * const { outfits, getCurrentOutfit, getDayOutfit } = useOutfit(weather)
  *
  * // Get current outfit
  * const currentOutfit = getCurrentOutfit()
  * console.log(currentOutfit.emojis)     // "🧥🧣👖🥾☂️"
- * console.log(currentOutfit.oneLiner)   // "Cold and rainy - umbrella time! ☔"
- * console.log(currentOutfit.view)       // "now"
+ *
+ * // Get outfit for day 2 (2 days from now)
+ * const day2Outfit = getDayOutfit(2)
+ * console.log(day2Outfit.dayLabel)      // "Wed"
  * ```
  */
 export function useOutfit(weather: WeatherData | null) {
@@ -59,6 +65,7 @@ export function useOutfit(weather: WeatherData | null) {
     if (!weather) {
       return {
         now: null,
+        days: [] as (OutfitRecommendation | null)[],
         today: null,
         tomorrow: null
       }
@@ -73,10 +80,13 @@ export function useOutfit(weather: WeatherData | null) {
       isDay: number,
       view: OutfitView,
       highTemp?: number,
-      lowTemp?: number
+      lowTemp?: number,
+      dayIndex?: number,
+      dayLabel?: string
     ): OutfitRecommendation => {
       // Determine temperature bucket
-      const bucket = getTemperatureBucket(temperature, 'F')
+      // Note: Weather API always returns temperatures in Celsius
+      const bucket = getTemperatureBucket(temperature, 'C')
 
       // Determine weather modifier (rain, snow, wind, none)
       const modifier: WeatherModifier = getWeatherModifier(weatherCode, windSpeed, 'kmh')
@@ -100,7 +110,7 @@ export function useOutfit(weather: WeatherData | null) {
       // Generate friendly one-liner
       const oneLiner = generateOneLiner(bucket, modifier, uvCategory, isDay, weatherCode)
 
-      return { emojis, oneLiner, view, highTemp, lowTemp }
+      return { emojis, oneLiner, view, highTemp, lowTemp, dayIndex, dayLabel }
     }
 
     // Now: Based on current conditions
@@ -113,44 +123,40 @@ export function useOutfit(weather: WeatherData | null) {
       'now'
     )
 
-    // Today: Based on today's forecast with WORST weather conditions - Feature #62
-    // Use worst weather expected during the day (e.g., rain later = bring umbrella)
-    // Use the lower of max temp or current temp for conservative outfit
-    const todayTemp = Math.min(weather.daily.today.temperatureMax, weather.temperature)
+    // Generate outfits for all 7 days
+    const daysOutfits: OutfitRecommendation[] = weather.daily.days.map((day, index) => {
+      // For today (index 0), use worst weather conditions
+      // Use the lower of max temp or current temp for conservative outfit
+      const dayTemp = index === 0
+        ? Math.min(day.temperatureMax, weather.temperature)
+        : day.temperatureMax
 
-    // Use worst weather code from hourly data for today (if available) - Feature #62
-    const todayWeatherCode = weather.daily.today.weatherCodeWorst ?? weather.daily.today.weatherCode
+      // Use worst weather code from hourly data (if available)
+      const dayWeatherCode = day.weatherCodeWorst ?? day.weatherCode
 
-    // Use max wind speed from hourly data for today (if available) - Feature #62
-    const todayWindSpeed = weather.daily.today.windSpeedMax ?? weather.windSpeed
+      // Use max wind speed from hourly data (if available)
+      const dayWindSpeed = day.windSpeedMax ?? weather.windSpeed
 
-    const todayOutfit = createRecommendation(
-      todayTemp,
-      todayWeatherCode,  // Worst weather code of the day
-      todayWindSpeed,    // Max wind speed of the day
-      weather.daily.today.uvIndexMax,
-      weather.isDay,
-      'today',
-      weather.daily.today.temperatureMax, // High temp for display
-      weather.daily.today.temperatureMin  // Low temp for display
-    )
-
-    // Tomorrow: Based on tomorrow's forecast
-    const tomorrowOutfit = createRecommendation(
-      weather.daily.tomorrow.temperatureMax,
-      weather.daily.tomorrow.weatherCode,
-      weather.windSpeed, // Use current wind as estimate
-      weather.daily.tomorrow.uvIndexMax,
-      weather.isDay,
-      'tomorrow',
-      weather.daily.tomorrow.temperatureMax, // High temp for display
-      weather.daily.tomorrow.temperatureMin  // Low temp for display
-    )
+      return createRecommendation(
+        dayTemp,
+        dayWeatherCode,
+        dayWindSpeed,
+        day.uvIndexMax,
+        index === 0 ? weather.isDay : 1, // Future days are always considered daytime for planning
+        index, // view is the day index
+        day.temperatureMax,
+        day.temperatureMin,
+        day.dayIndex,
+        day.dayLabel
+      )
+    })
 
     return {
       now: nowOutfit,
-      today: todayOutfit,
-      tomorrow: tomorrowOutfit
+      days: daysOutfits,
+      // Backward compatibility aliases
+      today: daysOutfits[0] ?? null,
+      tomorrow: daysOutfits[1] ?? null
     }
   }, [weather])
 
@@ -175,11 +181,20 @@ export function useOutfit(weather: WeatherData | null) {
     return outfits.tomorrow ?? null
   }
 
+  /**
+   * Get outfit recommendation for a specific day by index
+   * @param dayIndex - Day index (0 = today, 1 = tomorrow, 2-6 = future days)
+   */
+  const getDayOutfit = (dayIndex: number): OutfitRecommendation | null => {
+    return outfits.days[dayIndex] ?? null
+  }
+
   return {
     outfits,
     getCurrentOutfit,
     getTodayOutfit,
-    getTomorrowOutfit
+    getTomorrowOutfit,
+    getDayOutfit
   }
 }
 

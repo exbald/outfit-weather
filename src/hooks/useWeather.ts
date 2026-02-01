@@ -21,7 +21,11 @@ export interface WeatherData {
     timezone: string
   }
   daily: {
+    /** Array of 7 days of forecast data */
+    days: DailyWeatherData[]
+    /** Alias for days[0] - backward compatibility */
     today: DailyWeatherData
+    /** Alias for days[1] - backward compatibility */
     tomorrow: DailyWeatherData
   }
 }
@@ -55,6 +59,9 @@ export interface UseWeatherResult {
  */
 // Background refresh interval in milliseconds (30 minutes)
 const BACKGROUND_REFRESH_INTERVAL = 30 * 60 * 1000
+
+// Skip fetch threshold - don't fetch if cache is fresher than this (5 minutes)
+const SKIP_FETCH_THRESHOLD = 5 * 60 * 1000
 
 export function useWeather(lat?: number, lon?: number): UseWeatherResult {
   const [weather, setWeather] = useState<WeatherData | null>(null)
@@ -200,19 +207,27 @@ export function useWeather(lat?: number, lon?: number): UseWeatherResult {
     }
   }
 
-  // Initialize: load from cache first, then fetch fresh data
+  // Initialize: load from cache first, then fetch fresh data only if needed
   // Also set up periodic background refresh while app is open
   useEffect(() => {
     if (lat && lon) {
       // Step 1: Load cached data immediately for instant display
       const cached = loadWeatherData(lat, lon)
+      const currentCacheAge = getCacheAge()
+      const cacheAgeMs = currentCacheAge * 1000 // Convert seconds to ms
+
       if (cached) {
         setWeather(cached)
-        setCacheAge(getCacheAge())
+        setCacheAge(currentCacheAge)
       }
 
-      // Step 2: Fetch fresh data in background
-      fetchWeather(lat, lon)
+      // Step 2: Only fetch if cache is stale (> 5 minutes old) or doesn't exist
+      if (!cached || cacheAgeMs > SKIP_FETCH_THRESHOLD) {
+        console.log('[Weather] Cache stale or missing, fetching fresh data...')
+        fetchWeather(lat, lon)
+      } else {
+        console.log(`[Weather] Cache is fresh (${Math.round(cacheAgeMs / 1000)}s old), skipping fetch`)
+      }
 
       // Step 3: Set up periodic background refresh every 30 minutes
       const timer = setInterval(() => {

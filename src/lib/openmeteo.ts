@@ -212,6 +212,10 @@ export interface DailyWeatherData {
   windSpeedMax?: number
   /** Hourly precipitation probability max (from hourly data) - Feature #62 */
   precipitationProbabilityHourlyMax?: number
+  /** Day index in the forecast (0 = today, 1 = tomorrow, 2-6 = future days) */
+  dayIndex: number
+  /** Human-readable day label ("Today", "Tomorrow", "Wed", etc.) */
+  dayLabel: string
 }
 
 export interface CurrentWeatherResponse {
@@ -466,17 +470,18 @@ export async function fetchCurrentWeather(
 }
 
 /**
- * Parse daily forecast data and extract today and tomorrow
+ * Parse daily forecast data and extract up to 7 days
  * Also calculates worst weather conditions from hourly data - Feature #62
  * @param dailyData - Daily data array from Open-Meteo API
  * @param hourlyData - Hourly data array from Open-Meteo API
- * @returns Object with today and tomorrow weather data
+ * @returns Object with days array and today/tomorrow aliases for backward compatibility
  * @throws Error if daily data is invalid
  */
 export function parseDailyForecast(
   dailyData: CurrentWeatherResponse['daily'],
   hourlyData: CurrentWeatherResponse['hourly']
 ): {
+  days: DailyWeatherData[]
   today: DailyWeatherData
   tomorrow: DailyWeatherData
 } {
@@ -486,6 +491,15 @@ export function parseDailyForecast(
 
   if (!hourlyData.time || hourlyData.time.length < 24) {
     throw new Error('Invalid hourly data: insufficient hours')
+  }
+
+  // Import day labels dynamically to avoid circular dependency
+  const getDayLabel = (dayIndex: number, date: string): string => {
+    if (dayIndex === 0) return 'Today'
+    if (dayIndex === 1) return 'Tomorrow'
+    const dateObj = new Date(date)
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    return weekdays[dateObj.getDay()]
   }
 
   // Helper function to find worst weather for a day - Feature #62
@@ -550,34 +564,32 @@ export function parseDailyForecast(
     }
   }
 
-  // Calculate worst weather for today
-  const todayWorst = findWorstWeatherForDay(dailyData.time[0])
+  // Extract up to 7 days (or fewer if API returns less)
+  const numDays = Math.min(dailyData.time.length, 7)
+  const days: DailyWeatherData[] = []
 
-  // Calculate worst weather for tomorrow
-  const tomorrowWorst = findWorstWeatherForDay(dailyData.time[1])
+  for (let i = 0; i < numDays; i++) {
+    const worstWeather = findWorstWeatherForDay(dailyData.time[i])
 
-  // Extract today (index 0) and tomorrow (index 1)
-  const today: DailyWeatherData = {
-    time: dailyData.time[0],
-    temperatureMax: dailyData.temperature_2m_max[0],
-    temperatureMin: dailyData.temperature_2m_min[0],
-    weatherCode: dailyData.weathercode[0],
-    precipitationProbabilityMax: dailyData.precipitation_probability_max[0],
-    uvIndexMax: dailyData.uv_index_max[0],
-    ...todayWorst
+    days.push({
+      time: dailyData.time[i],
+      temperatureMax: dailyData.temperature_2m_max[i],
+      temperatureMin: dailyData.temperature_2m_min[i],
+      weatherCode: dailyData.weathercode[i],
+      precipitationProbabilityMax: dailyData.precipitation_probability_max[i],
+      uvIndexMax: dailyData.uv_index_max[i],
+      dayIndex: i,
+      dayLabel: getDayLabel(i, dailyData.time[i]),
+      ...worstWeather
+    })
   }
 
-  const tomorrow: DailyWeatherData = {
-    time: dailyData.time[1],
-    temperatureMax: dailyData.temperature_2m_max[1],
-    temperatureMin: dailyData.temperature_2m_min[1],
-    weatherCode: dailyData.weathercode[1],
-    precipitationProbabilityMax: dailyData.precipitation_probability_max[1],
-    uvIndexMax: dailyData.uv_index_max[1],
-    ...tomorrowWorst
+  // Return with backward-compatible aliases
+  return {
+    days,
+    today: days[0],
+    tomorrow: days[1]
   }
-
-  return { today, tomorrow }
 }
 
 /**

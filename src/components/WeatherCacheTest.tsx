@@ -28,6 +28,26 @@ export function WeatherCacheTest() {
     addResult('🧪 Starting Cache Tests...')
 
     // Test 1: Save weather data
+    const todayData = {
+      time: '2026-01-31',
+      temperatureMax: 25.0,
+      temperatureMin: 18.0,
+      weatherCode: 0,
+      precipitationProbabilityMax: 0,
+      uvIndexMax: 5,
+      dayIndex: 0,
+      dayLabel: 'Today'
+    }
+    const tomorrowData = {
+      time: '2026-02-01',
+      temperatureMax: 24.0,
+      temperatureMin: 17.0,
+      weatherCode: 1,
+      precipitationProbabilityMax: 10,
+      uvIndexMax: 4,
+      dayIndex: 1,
+      dayLabel: 'Tomorrow'
+    }
     const testData = {
       temperature: 22.5,
       apparentTemperature: 21.8,
@@ -38,22 +58,9 @@ export function WeatherCacheTest() {
       isDay: 1,
       location: { latitude: 37.7749, longitude: -122.4194, timezone: 'America/Los_Angeles' },
       daily: {
-        today: {
-          time: '2026-01-31',
-          temperatureMax: 25.0,
-          temperatureMin: 18.0,
-          weatherCode: 0,
-          precipitationProbabilityMax: 0,
-          uvIndexMax: 5
-        },
-        tomorrow: {
-          time: '2026-02-01',
-          temperatureMax: 24.0,
-          temperatureMin: 17.0,
-          weatherCode: 1,
-          precipitationProbabilityMax: 10,
-          uvIndexMax: 4
-        }
+        days: [todayData, tomorrowData],
+        today: todayData,
+        tomorrow: tomorrowData
       }
     }
 
@@ -127,6 +134,26 @@ export function WeatherCacheTest() {
 
     // Test 7: Serialization/Deserialization
     try {
+      const coldToday = {
+        time: '2026-01-31',
+        temperatureMax: -10.0,
+        temperatureMin: -20.0,
+        weatherCode: 71,
+        precipitationProbabilityMax: 80,
+        uvIndexMax: 1,
+        dayIndex: 0,
+        dayLabel: 'Today'
+      }
+      const coldTomorrow = {
+        time: '2026-02-01',
+        temperatureMax: -8.0,
+        temperatureMin: -18.0,
+        weatherCode: 65,
+        precipitationProbabilityMax: 70,
+        uvIndexMax: 1,
+        dayIndex: 1,
+        dayLabel: 'Tomorrow'
+      }
       const complexData = {
         temperature: -15.7,
         apparentTemperature: -24.3,
@@ -141,22 +168,9 @@ export function WeatherCacheTest() {
           timezone: 'America/Anchorage'
         },
         daily: {
-          today: {
-            time: '2026-01-31',
-            temperatureMax: -10.0,
-            temperatureMin: -20.0,
-            weatherCode: 71,
-            precipitationProbabilityMax: 80,
-            uvIndexMax: 1
-          },
-          tomorrow: {
-            time: '2026-02-01',
-            temperatureMax: -8.0,
-            temperatureMin: -18.0,
-            weatherCode: 65,
-            precipitationProbabilityMax: 70,
-            uvIndexMax: 1
-          }
+          days: [coldToday, coldTomorrow],
+          today: coldToday,
+          tomorrow: coldTomorrow
         }
       }
 
