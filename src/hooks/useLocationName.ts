@@ -30,17 +30,31 @@ function getCacheKey(lat: number, lon: number): string {
  * - In-memory caching to avoid repeated API calls
  * - Automatic retry on failure (inherited from fetchLocationName)
  * - Graceful fallback - returns empty string if geocoding fails
+ * - Uses stored city name from city search if available (skips API call)
  *
  * @param lat - Latitude coordinate
  * @param lon - Longitude coordinate
+ * @param storedCityName - Optional city name from city search (skips API call)
  * @returns Location name, loading state, and error state
  */
-export function useLocationName(lat?: number, lon?: number): UseLocationNameResult {
+export function useLocationName(
+  lat?: number,
+  lon?: number,
+  storedCityName?: string
+): UseLocationNameResult {
   const [locationName, setLocationName] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // If we have a stored city name from city search, use it immediately
+    if (storedCityName) {
+      setLocationName(storedCityName)
+      setLoading(false)
+      setError(null)
+      return
+    }
+
     // Don't fetch if coordinates are not provided
     if (lat === undefined || lon === undefined) {
       return
@@ -80,7 +94,7 @@ export function useLocationName(lat?: number, lon?: number): UseLocationNameResu
       .finally(() => {
         setLoading(false)
       })
-  }, [lat, lon])
+  }, [lat, lon, storedCityName])
 
   return {
     locationName,

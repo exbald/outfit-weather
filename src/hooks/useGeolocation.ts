@@ -36,25 +36,33 @@ export const GEOLOCATION_OPTIONS: PositionOptions = {
 const LOCATION_STORAGE_KEY = 'outfit_weather_location'
 const PERMISSION_STORAGE_KEY = 'outfit_weather_location_granted'
 
-interface StoredLocation {
+/**
+ * Stored location data including optional city name
+ * Exported for use by other components (e.g., CitySearch, useLocationName)
+ */
+export interface StoredLocationData {
   latitude: number
   longitude: number
   timestamp: number
+  /** City name from search (e.g., "San Francisco, California") */
+  cityName?: string
 }
 
 /**
  * Save location to localStorage
+ * @param position - Location position with coordinates
+ * @param cityName - Optional city name from city search
  */
-function saveLocation(position: LocationPosition): void {
+export function saveLocation(position: LocationPosition, cityName?: string): void {
   try {
-    const stored: StoredLocation = {
+    const stored: StoredLocationData = {
       latitude: position.latitude,
       longitude: position.longitude,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...(cityName && { cityName })
     }
     localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(stored))
     localStorage.setItem(PERMISSION_STORAGE_KEY, 'true')
-    console.log('[Geolocation] Saved location to storage')
   } catch (error) {
     console.warn('[Geolocation] Failed to save location:', error)
   }
@@ -64,12 +72,12 @@ function saveLocation(position: LocationPosition): void {
  * Load stored location from localStorage
  * Returns null if no stored location or if it's too old (> 24 hours)
  */
-function loadStoredLocation(): LocationPosition | null {
+export function loadStoredLocation(): StoredLocationData | null {
   try {
     const stored = localStorage.getItem(LOCATION_STORAGE_KEY)
     if (!stored) return null
 
-    const parsed: StoredLocation = JSON.parse(stored)
+    const parsed: StoredLocationData = JSON.parse(stored)
     const age = Date.now() - parsed.timestamp
     const maxAge = 24 * 60 * 60 * 1000 // 24 hours
 
@@ -87,7 +95,8 @@ function loadStoredLocation(): LocationPosition | null {
     return {
       latitude: parsed.latitude,
       longitude: parsed.longitude,
-      timestamp: parsed.timestamp
+      timestamp: parsed.timestamp,
+      cityName: parsed.cityName
     }
   } catch (error) {
     console.warn('[Geolocation] Failed to load stored location:', error)

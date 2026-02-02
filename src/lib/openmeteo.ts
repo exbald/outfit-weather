@@ -661,6 +661,145 @@ export function buildReverseGeocodingUrl(lat: number, lon: number): string {
  * @returns Promise with location name (e.g., "San Francisco, CA" or "London")
  * @throws WeatherApiError if fetch fails or returns invalid data
  */
+/**
+ * Open-Meteo Geocoding API result
+ * Documentation: https://open-meteo.com/en/docs/geocoding-api
+ */
+export interface GeocodingResult {
+  /** Unique identifier for the location */
+  id: number
+  /** City name (e.g., "San Francisco") */
+  name: string
+  /** Latitude coordinate */
+  latitude: number
+  /** Longitude coordinate */
+  longitude: number
+  /** Country name (e.g., "United States") */
+  country: string
+  /** State/province (e.g., "California") */
+  admin1?: string
+  /** Country code (e.g., "US") */
+  country_code: string
+  /** Elevation in meters */
+  elevation?: number
+  /** Population if available */
+  population?: number
+}
+
+/**
+ * Open-Meteo Geocoding API response
+ */
+interface GeocodingApiResponse {
+  results?: GeocodingResult[]
+  generationtime_ms?: number
+}
+
+/**
+ * Build Open-Meteo Geocoding API URL
+ * @param query - City name to search for
+ * @param count - Maximum number of results (default: 5)
+ * @param language - Language for results (default: "en")
+ * @returns Geocoding API URL
+ */
+export function buildGeocodingUrl(
+  query: string,
+  count: number = 5,
+  language: string = 'en'
+): string {
+  const baseUrl = 'https://geocoding-api.open-meteo.com/v1/search'
+  const params = new URLSearchParams({
+    name: query,
+    count: count.toString(),
+    language,
+    format: 'json'
+  })
+  return `${baseUrl}?${params.toString()}`
+}
+
+/**
+ * Search for cities by name using Open-Meteo Geocoding API
+ *
+ * This API is free, requires no authentication, and has no rate limits.
+ * It returns city suggestions with coordinates for weather lookup.
+ *
+ * @param query - City name to search for (minimum 2 characters)
+ * @param count - Maximum number of results (default: 5)
+ * @returns Promise with array of matching cities
+ * @throws WeatherApiError if fetch fails or returns invalid data
+ */
+export async function searchCities(
+  query: string,
+  count: number = 5
+): Promise<GeocodingResult[]> {
+  // Don't search for very short queries
+  if (!query || query.trim().length < 2) {
+    return []
+  }
+
+  const url = buildGeocodingUrl(query.trim(), count)
+
+  try {
+    const data = await retryWithBackoff(async () => {
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        const errorInfo = getErrorMessageForStatus(response.status, response.statusText)
+        throw new WeatherApiError(
+          errorInfo.technical,
+          errorInfo.user,
+          errorInfo.isRetryable
+        )
+      }
+
+      return response.json() as Promise<GeocodingApiResponse>
+    })
+
+    // API returns empty object or missing results when no matches found
+    if (!data.results || data.results.length === 0) {
+      return []
+    }
+
+    return data.results
+  } catch (error) {
+    // Re-throw WeatherApiError as-is
+    if (error instanceof WeatherApiError) {
+      throw error
+    }
+
+    // Wrap network errors
+    if (error instanceof TypeError) {
+      throw new WeatherApiError(
+        `Network error: ${error.message}`,
+        'No internet connection. Please check your network.',
+        true
+      )
+    }
+
+    // Wrap unknown errors
+    throw new WeatherApiError(
+      `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      'Something went wrong. Please try again.',
+      true
+    )
+  }
+}
+
+/**
+ * Format a city name for display
+ * @param city - Geocoding result
+ * @returns Formatted string like "San Francisco, California" or "London, United Kingdom"
+ */
+export function formatCityName(city: GeocodingResult): string {
+  const parts = [city.name]
+
+  // Add state/province if available and different from city name
+  if (city.admin1 && city.admin1 !== city.name) {
+    parts.push(city.admin1)
+  }
+
+  return parts.join(', ')
+}
+
 export async function fetchLocationName(
   lat: number,
   lon: number

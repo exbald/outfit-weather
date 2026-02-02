@@ -3,8 +3,9 @@ import { Layout } from './components/Layout'
 import { WeatherDisplay } from './components/WeatherDisplay'
 import { DevTests } from './components/DevTests'
 import { InstallButton } from './components/InstallButton'
+import { CitySearch } from './components/CitySearch'
 import { BackgroundGradient } from './components/ui/background-gradient'
-import { useGeolocation } from './hooks/useGeolocation'
+import { useGeolocation, saveLocation, loadStoredLocation } from './hooks/useGeolocation'
 import { useAdaptiveTextColors } from './hooks/useAdaptiveTextColors'
 import { useWeatherGradient } from './hooks/useWeatherGradient'
 import { useWeather } from './hooks/useWeather'
@@ -139,160 +140,25 @@ export function LocationTimeout({ onRetry, textColors }: { onRetry: () => void; 
   )
 }
 
-/**
- * Manual location entry screen component
- * Shown when user chooses to enter location manually
- */
-function ManualLocationEntry({
-  onSubmit,
-  onCancel,
-  textColors
-}: {
-  onSubmit: (lat: number, lon: number) => void
-  onCancel: () => void
-  textColors: ReturnType<typeof useAdaptiveTextColors>['classes']
-}) {
-  const [latitude, setLatitude] = useState('')
-  const [longitude, setLongitude] = useState('')
-  const [error, setError] = useState('')
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-
-    const lat = parseFloat(latitude)
-    const lon = parseFloat(longitude)
-
-    // Validate inputs
-    if (isNaN(lat) || isNaN(lon)) {
-      setError('Please enter valid numbers for latitude and longitude.')
-      return
-    }
-
-    if (lat < -90 || lat > 90) {
-      setError('Latitude must be between -90 and 90.')
-      return
-    }
-
-    if (lon < -180 || lon > 180) {
-      setError('Longitude must be between -180 and 180.')
-      return
-    }
-
-    onSubmit(lat, lon)
-  }
-
-  const handleCancel = () => {
-    setLatitude('')
-    setLongitude('')
-    setError('')
-    onCancel()
-  }
-
-  return (
-    <section aria-labelledby="manual-location-title" className="flex flex-col items-center justify-center py-16 space-y-6 px-4">
-      <div className="text-6xl" role="img" aria-label="Map pin icon">🗺️</div>
-      <div className="w-full max-w-md">
-        <h2 id="manual-location-title" className={`text-xl font-semibold ${textColors.primary} mb-3 text-center`}>
-          Enter Your Location
-        </h2>
-        <p className={`${textColors.secondary} mb-6 text-center text-sm`}>
-          Enter your latitude and longitude to get weather data for your area.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="latitude" className={`block ${textColors.secondary} text-sm font-medium mb-2`}>
-              Latitude
-            </label>
-            <input
-              id="latitude"
-              type="number"
-              step="any"
-              value={latitude}
-              onChange={(e) => setLatitude(e.target.value)}
-              placeholder="e.g., 40.7128"
-              min="-90"
-              max="90"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              aria-describedby="latitude-hint"
-            />
-            <p id="latitude-hint" className={`text-xs ${textColors.muted} mt-1`}>
-              Between -90 and 90
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="longitude" className={`block ${textColors.secondary} text-sm font-medium mb-2`}>
-              Longitude
-            </label>
-            <input
-              id="longitude"
-              type="number"
-              step="any"
-              value={longitude}
-              onChange={(e) => setLongitude(e.target.value)}
-              placeholder="e.g., -74.0060"
-              min="-180"
-              max="180"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              aria-describedby="longitude-hint"
-            />
-            <p id="longitude-hint" className={`text-xs ${textColors.muted} mt-1`}>
-              Between -180 and 180
-            </p>
-          </div>
-
-          {error && (
-            <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-
-          <div className="space-y-3 pt-2">
-            <button
-              type="submit"
-              className="w-full px-6 py-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors font-medium text-lg"
-            >
-              Get Weather
-            </button>
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="w-full px-6 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium text-lg border border-gray-300"
-            >
-              Cancel
-            </button>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <p className={`text-xs ${textColors.muted} text-center mb-2`}>
-              You can find your coordinates by searching "my coordinates" on Google Maps.
-            </p>
-            <a
-              href="https://www.google.com/maps"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:text-blue-700 text-center block"
-            >
-              Open Google Maps →
-            </a>
-          </div>
-        </form>
-      </div>
-    </section>
-  )
-}
 
 function App() {
   const { position, error: locationError, loading: locationLoading, requestLocation, permissionShown, grantPermission } = useGeolocation()
   const { isInstallable, promptInstall, dismissInstall } = usePwaInstall()
   const { themePreference } = useSettingsContext()
   const { isDarkMode } = useDarkMode(themePreference) // Feature #56: Detect system dark mode preference
-  // Manual location entry state
-  const [manualLocation, setManualLocation] = useState<{ latitude: number; longitude: number } | null>(null)
+  // Manual location entry state (with optional cityName for display)
+  // Initialize from localStorage if there's a stored city name (from city search)
+  const [manualLocation, setManualLocation] = useState<{ latitude: number; longitude: number; cityName?: string } | null>(() => {
+    const stored = loadStoredLocation()
+    if (stored?.cityName) {
+      return {
+        latitude: stored.latitude,
+        longitude: stored.longitude,
+        cityName: stored.cityName
+      }
+    }
+    return null
+  })
   const [showManualEntry, setShowManualEntry] = useState(false)
   const [weatherForBackground, setWeatherForBackground] = useState<{
     temperature: number
@@ -302,10 +168,12 @@ function App() {
   // Active day index for drawer (0 = today, 1 = tomorrow, 2-6 = future days)
   const [activeDayIndex, setActiveDayIndex] = useState<number>(0)
 
-  // Handlers for manual location (used in LocationPermissionDenied and ManualLocationEntry)
+  // Handlers for manual location (used in LocationPermissionDenied and CitySearch)
   const handleManualLocationClick = () => setShowManualEntry(true)
-  const handleManualLocationSubmit = (lat: number, lon: number) => {
-    setManualLocation({ latitude: lat, longitude: lon })
+  const handleManualLocationSubmit = (lat: number, lon: number, cityName?: string) => {
+    // Save to localStorage for persistence across sessions (24hr TTL)
+    saveLocation({ latitude: lat, longitude: lon }, cityName)
+    setManualLocation({ latitude: lat, longitude: lon, cityName })
     setShowManualEntry(false)
   }
 
@@ -317,9 +185,11 @@ function App() {
   )
 
   // Fetch location name using reverse geocoding (Feature #10)
+  // If manual location has cityName, use it directly; otherwise fetch via API
   const { locationName } = useLocationName(
     currentPosition?.latitude,
-    currentPosition?.longitude
+    currentPosition?.longitude,
+    manualLocation?.cityName
   )
 
   // Generate outfit recommendations based on weather (static fallback)
@@ -383,12 +253,12 @@ function App() {
     isDarkMode // Feature #56: Pass system dark mode preference
   )
 
-  // Show manual location entry form
+  // Show city search form (replaces manual lat/lon entry)
   if (showManualEntry) {
     return (
       <BackgroundGradient {...gradientColors}>
         <Layout>
-          <ManualLocationEntry
+          <CitySearch
             onSubmit={handleManualLocationSubmit}
             onCancel={() => setShowManualEntry(false)}
             textColors={textColors}
