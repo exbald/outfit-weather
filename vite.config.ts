@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { resolve } from 'path'
 
 export default defineConfig({
   resolve: {
@@ -93,8 +94,12 @@ export default defineConfig({
     },
     // Target modern browsers for smaller bundle
     target: 'es2020',
-    // Chunk splitting for better caching
+    // Multi-page app support for og-image + chunk splitting
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        'og-image': resolve(__dirname, 'og-image.html'),
+      },
       output: {
         manualChunks: undefined, // Let Vite auto-split
         // Minify bundle file names
